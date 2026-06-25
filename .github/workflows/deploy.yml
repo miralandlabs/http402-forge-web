@@ -1,0 +1,87 @@
+name: Deploy Web → Vercel
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+# GitHub Actions secrets (http402-forge-web repo):
+#   VERCEL_TOKEN, ORG_ID, PROJECT_ID
+# Optional (Helius or other RPC — recommended; URLs often contain API keys):
+#   VITE_RPC_URL_PRODUCTION   e.g. https://mainnet.helius-rpc.com/?api-key=...
+#   VITE_RPC_URL_PREVIEW      e.g. https://devnet.helius-rpc.com/?api-key=...
+# Falls back to public Solana RPC when unset.
+
+jobs:
+  deploy:
+    name: Web → Vercel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Set Vite build env
+        env:
+          VITE_RPC_URL_PRODUCTION: ${{ secrets.VITE_RPC_URL_PRODUCTION }}
+          VITE_RPC_URL_PREVIEW: ${{ secrets.VITE_RPC_URL_PREVIEW }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "VERCEL_ENV=production" >> "$GITHUB_ENV"
+            echo "VITE_API_BASE_URL=https://forge.http402.trade" >> "$GITHUB_ENV"
+            echo "VITE_FACILITATOR_BASE_URL=https://ipay.sh/api/v1/facilitator" >> "$GITHUB_ENV"
+            echo "PUBLIC_URL=https://http402.trade" >> "$GITHUB_ENV"
+            if [ -n "${VITE_RPC_URL_PRODUCTION:-}" ]; then
+              echo "VITE_RPC_URL=${VITE_RPC_URL_PRODUCTION}" >> "$GITHUB_ENV"
+            else
+              echo "VITE_RPC_URL=https://api.mainnet-beta.solana.com" >> "$GITHUB_ENV"
+            fi
+          else
+            echo "VERCEL_ENV=preview" >> "$GITHUB_ENV"
+            echo "VITE_API_BASE_URL=https://preview.forge.http402.trade" >> "$GITHUB_ENV"
+            echo "VITE_FACILITATOR_BASE_URL=https://preview.ipay.sh/api/v1/facilitator" >> "$GITHUB_ENV"
+            echo "PUBLIC_URL=https://preview.http402.trade" >> "$GITHUB_ENV"
+            if [ -n "${VITE_RPC_URL_PREVIEW:-}" ]; then
+              echo "VITE_RPC_URL=${VITE_RPC_URL_PREVIEW}" >> "$GITHUB_ENV"
+            else
+              echo "VITE_RPC_URL=https://api.devnet.solana.com" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@52.2.1
+
+      - name: Link Vercel project
+        run: |
+          mkdir -p .vercel
+          cat > .vercel/project.json << EOF
+          {
+            "orgId": "${{ secrets.ORG_ID }}",
+            "projectId": "${{ secrets.PROJECT_ID }}"
+          }
+          EOF
+
+      - name: Deploy to Vercel (prebuilt)
+        env:
+          VERCEL_ORG_ID: ${{ secrets.ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          if [ "${VERCEL_ENV}" = "production" ]; then
+            vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+            vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+            vercel deploy --prebuilt --yes --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          else
+            vercel pull --yes --environment=preview --token="${{ secrets.VERCEL_TOKEN }}"
+            vercel build --token="${{ secrets.VERCEL_TOKEN }}"
+            vercel deploy --prebuilt --yes --token="${{ secrets.VERCEL_TOKEN }}"
+          fi
+          echo "Custom domain: ${PUBLIC_URL}"
