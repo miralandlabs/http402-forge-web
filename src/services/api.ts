@@ -138,10 +138,21 @@ export async function fetchDelistChallenge(
     cache: "no-store",
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(
-      (err as { error?: string }).error ?? `delist-challenge ${res.status}`,
-    );
+    const text = await res.text();
+    let err = {} as { error?: string };
+    if (text) {
+      try {
+        err = JSON.parse(text);
+      } catch {
+        /* plain 404 from stale API without route */
+      }
+    }
+    if (res.status === 404 && !text.trim()) {
+      throw new Error(
+        "Delist API is not available on this host (stale deploy). Redeploy http402-forge-api.",
+      );
+    }
+    throw new Error(err.error ?? `delist-challenge ${res.status}`);
   }
   const raw = (await res.json()) as Record<string, unknown>;
   return {

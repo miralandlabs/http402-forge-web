@@ -109,8 +109,11 @@ export const en = {
   hottest: "Hottest listings",
   footer: "Payments settle to creator vaults via pr402 — Forge is not custodian.",
   removeListing: "Remove listing",
+  delistConfirmTitle: "Remove listing?",
   delistConfirm:
     "Remove this listing from the marketplace? Buyers who already paid can still re-download.",
+  delistConfirmCancel: "Cancel",
+  delistConfirmAction: "Remove listing",
   delistSuccess: "Listing removed.",
 } as const;
 
@@ -227,7 +230,10 @@ export const zh: Record<MessageKey, string> = {
   hottest: "最热商品",
   footer: "支付通过 pr402 结算至创作者金库 — Forge 不托管资金。",
   removeListing: "下架商品",
+  delistConfirmTitle: "下架商品？",
   delistConfirm: "从市场下架此商品？已付款的买家仍可重新下载。",
+  delistConfirmCancel: "取消",
+  delistConfirmAction: "确认下架",
   delistSuccess: "商品已下架。",
 };
 

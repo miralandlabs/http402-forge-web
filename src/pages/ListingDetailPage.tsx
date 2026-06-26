@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Buffer } from "buffer";
+import { DelistConfirmModal } from "../components/DelistConfirmModal";
 import { PaymentConfirmModal } from "../components/PaymentConfirmModal";
 import {
   API_BASE,
@@ -46,6 +47,7 @@ export function ListingDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [delistConfirmOpen, setDelistConfirmOpen] = useState(false);
   const [paymentChallenge, setPaymentChallenge] =
     useState<PaymentRequiredBody | null>(null);
   const [confirmDetails, setConfirmDetails] =
@@ -144,11 +146,22 @@ export function ListingDetailPage() {
   const isOwner =
     !!publicKey && listing?.sellerWallet === publicKey.toBase58();
 
-  const onDelistClick = async () => {
+  const onDelistClick = () => {
     if (!id || !listing || !isOwner) return;
-    if (!window.confirm(msg("delistConfirm"))) return;
+    setError(null);
+    setDelistConfirmOpen(true);
+  };
+
+  const onCancelDelist = () => {
+    if (busy) return;
+    setDelistConfirmOpen(false);
+  };
+
+  const onConfirmDelist = async () => {
+    if (!id || !listing || !isOwner) return;
     setError(null);
     if (!publicKey) {
+      setDelistConfirmOpen(false);
       setVisible(true);
       return;
     }
@@ -170,6 +183,7 @@ export function ListingDetailPage() {
         challengeMessage,
         Buffer.from(signature).toString("base64"),
       );
+      setDelistConfirmOpen(false);
       navigate("/forge", { state: { toast: msg("delistSuccess") } });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -231,10 +245,10 @@ export function ListingDetailPage() {
             <button
               type="button"
               className="control-btn"
-              disabled={busy}
+              disabled={busy && !delistConfirmOpen}
               onClick={onDelistClick}
             >
-              {busy ? msg("loading") : msg("removeListing")}
+              {busy && delistConfirmOpen ? msg("loading") : msg("removeListing")}
             </button>
           )}
         </div>
@@ -250,6 +264,14 @@ export function ListingDetailPage() {
           onCancel={onCancelPayment}
         />
       )}
+
+      <DelistConfirmModal
+        open={delistConfirmOpen}
+        listingTitle={listing.title}
+        busy={busy}
+        onConfirm={() => void onConfirmDelist()}
+        onCancel={onCancelDelist}
+      />
     </>
   );
 }
