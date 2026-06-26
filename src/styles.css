@@ -1223,3 +1223,50 @@ a.seller-wallet-chip-addr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.live-sales-ticker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: var(--fair-surface-elevated, rgba(255, 255, 255, 0.06));
+  font-size: 0.9rem;
+}
+
+.live-sales-ticker-label {
+  font-weight: 600;
+  color: var(--fair-accent, #7c5cff);
+}
+
+.live-sales-ticker-link {
+  font-family: ui-monospace, monospace;
+}
+
+.browse-sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.seller-storefront-count {
+  color: var(--fair-text-muted);
+  font-size: 0.9rem;
+}
+
+.agent-meta {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.agent-meta dt {
+  color: var(--fair-text-muted);
+}
+
+.agent-meta dd {
+  margin: 0;
+}

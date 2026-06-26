@@ -25,6 +25,8 @@ export interface PaymentConfirmDetails {
   deliveryScheme: "exact" | "escrow";
   mimeType: string;
   schemeLabel: string;
+  platformFeeBps?: number;
+  platformFeeWallet?: string;
 }
 
 function pickAcceptLine(
@@ -94,6 +96,17 @@ export function parsePaymentConfirmDetails(
 
   const productTitle = listing?.title ?? purpose.replace(/^Download:\s*/i, "");
 
+  let platformFeeBps: number | undefined;
+  let platformFeeWallet: string | undefined;
+  const split = accepted.split;
+  if (split && typeof split === "object" && split !== null) {
+    const s = split as Record<string, unknown>;
+    const bps = Number(s.platformBps ?? s.platform_bps);
+    const wallet = String(s.platformWallet ?? s.platform_wallet ?? "");
+    if (Number.isFinite(bps) && bps > 0) platformFeeBps = bps;
+    if (wallet) platformFeeWallet = wallet;
+  }
+
   return {
     productTitle,
     amountUi: formatAmount(accepted.amount, tokenInfo.decimals),
@@ -104,5 +117,7 @@ export function parsePaymentConfirmDetails(
     deliveryScheme,
     mimeType,
     schemeLabel: schemeLabel(String(accepted.scheme ?? "")),
+    platformFeeBps,
+    platformFeeWallet,
   };
 }

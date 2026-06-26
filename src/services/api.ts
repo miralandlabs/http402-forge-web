@@ -23,6 +23,9 @@ export interface Listing {
   agentFriendly: boolean;
   deliveryScheme: string;
   previewUrl: string;
+  tags: string[];
+  license?: string;
+  contentHash?: string;
   createdAt: string;
 }
 
@@ -41,6 +44,11 @@ function parseListing(raw: Record<string, unknown>): Listing {
     agentFriendly: Boolean(raw.agentFriendly ?? raw.agent_friendly),
     deliveryScheme: String(raw.deliveryScheme ?? raw.delivery_scheme ?? ""),
     previewUrl: String(raw.previewUrl ?? raw.preview_url ?? ""),
+    tags: Array.isArray(raw.tags)
+      ? (raw.tags as unknown[]).map(String)
+      : [],
+    license: (raw.license as string | undefined) ?? undefined,
+    contentHash: String(raw.contentHash ?? raw.content_hash ?? "") || undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }

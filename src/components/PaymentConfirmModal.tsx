@@ -94,6 +94,20 @@ export function PaymentConfirmModal({
             <dt>{msg("paymentConfirmRail")}</dt>
             <dd>{details.schemeLabel}</dd>
           </div>
+          {details.platformFeeBps != null && details.platformFeeBps > 0 && (
+            <div>
+              <dt>{msg("paymentConfirmPlatformFee")}</dt>
+              <dd>
+                {(details.platformFeeBps / 100).toFixed(2)}%
+                {details.platformFeeWallet && (
+                  <>
+                    {" "}
+                    (<code>{details.platformFeeWallet.slice(0, 4)}…</code>)
+                  </>
+                )}
+              </dd>
+            </div>
+          )}
         </dl>
 
         <p

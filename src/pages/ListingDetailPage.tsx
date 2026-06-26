@@ -7,14 +7,12 @@ import { DelistConfirmModal } from "../components/DelistConfirmModal";
 import { PaymentConfirmModal } from "../components/PaymentConfirmModal";
 import { SellerWalletChip } from "../components/SellerWalletChip";
 import {
-  API_BASE,
   delistListing,
   downloadWithPayment,
   fetchDelistChallenge,
   fetchDownloadQuote,
   fetchListing,
   formatUsdc,
-  previewResponseContentType,
   type Listing,
   type PaymentProgressPhase,
 } from "../services/api";
@@ -24,10 +22,15 @@ import {
 } from "../services/paymentConfirm";
 import type { PaymentRequiredBody } from "../services/wallet";
 import { useLocale } from "../hooks/useLocale";
+import {
+  fetchTextPreview,
+  listingPreviewMediaType,
+  listingPreviewUrl,
+} from "../utils/listingPreview";
 
 type PreviewContent =
   | { kind: "text"; text: string }
-  | { kind: "media"; url: string; contentType: string };
+  | { kind: "media"; url: string; contentType: string; loaded: boolean };
 
 type PreviewLoadState =
   | { status: "loading" }
@@ -73,36 +76,31 @@ export function ListingDetailPage() {
   }, [id, msg]);
 
   useEffect(() => {
-    if (!id || !listing) return;
+    if (!listing) return;
     let cancelled = false;
-    let objectUrl: string | null = null;
+
+    const mediaKind = listingPreviewMediaType(listing);
+    if (mediaKind === "media") {
+      setPreviewLoad({
+        status: "ready",
+        preview: {
+          kind: "media",
+          url: listingPreviewUrl(listing),
+          contentType: listing.contentType,
+          loaded: false,
+        },
+      });
+      return;
+    }
 
     setPreviewLoad({ status: "loading" });
-
-    fetch(`${API_BASE}/api/v1/listings/${id}/preview`)
-      .then(async (r) => {
-        if (!r.ok) {
-          if (!cancelled) setPreviewLoad({ status: "unavailable" });
-          return;
-        }
-        const contentType = previewResponseContentType(
-          r.headers.get("content-type"),
-          listing.contentType,
-        );
-        if (contentType.startsWith("text/") || contentType.includes("json")) {
-          const text = await r.text();
-          if (!cancelled) {
-            setPreviewLoad({ status: "ready", preview: { kind: "text", text } });
-          }
-          return;
-        }
-        const blob = await r.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (!cancelled) {
-          setPreviewLoad({
-            status: "ready",
-            preview: { kind: "media", url: objectUrl, contentType },
-          });
+    fetchTextPreview(listing)
+      .then((text) => {
+        if (cancelled) return;
+        if (text) {
+          setPreviewLoad({ status: "ready", preview: { kind: "text", text } });
+        } else {
+          setPreviewLoad({ status: "unavailable" });
         }
       })
       .catch(() => {
@@ -111,9 +109,18 @@ export function ListingDetailPage() {
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [id, listing]);
+  }, [listing]);
+
+  const markMediaLoaded = () => {
+    setPreviewLoad((prev) => {
+      if (prev.status !== "ready" || prev.preview.kind !== "media") return prev;
+      return {
+        status: "ready",
+        preview: { ...prev.preview, loaded: true },
+      };
+    });
+  };
 
   const onBuyClick = async () => {
     if (!id) return;
@@ -224,6 +231,11 @@ export function ListingDetailPage() {
 
   if (!listing) return <p>{msg("loading")}</p>;
 
+  const mediaLoading =
+    previewLoad.status === "ready" &&
+    previewLoad.preview.kind === "media" &&
+    !previewLoad.preview.loaded;
+
   return (
     <>
       <article className="card" style={{ maxWidth: 720 }}>
@@ -244,7 +256,34 @@ export function ListingDetailPage() {
           </Link>
         </p>
         <p>{listing.description}</p>
-        {previewLoad.status === "loading" && (
+        {listing.agentFriendly &&
+          ((listing.tags?.length ?? 0) > 0 ||
+            listing.license ||
+            listing.contentHash) && (
+            <dl className="agent-meta">
+              {(listing.tags?.length ?? 0) > 0 && (
+                <div>
+                  <dt>{msg("agentTags")}</dt>
+                  <dd>{listing.tags!.join(", ")}</dd>
+                </div>
+              )}
+              {listing.license && (
+                <div>
+                  <dt>{msg("agentLicense")}</dt>
+                  <dd>{listing.license}</dd>
+                </div>
+              )}
+              {listing.contentHash && (
+                <div>
+                  <dt>{msg("agentContentHash")}</dt>
+                  <dd>
+                    <code>{listing.contentHash}</code>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
+        {(previewLoad.status === "loading" || mediaLoading) && (
           <div className="preview-box preview-box--loading">
             <strong>{msg("preview")}</strong>
             <div className="preview-loading">
@@ -253,7 +292,7 @@ export function ListingDetailPage() {
             </div>
           </div>
         )}
-        {previewLoad.status === "ready" && (
+        {previewLoad.status === "ready" && !mediaLoading && (
           <div className="preview-box">
             <strong>{msg("preview")}</strong>
             {previewLoad.preview.kind === "text" ? (
@@ -265,23 +304,31 @@ export function ListingDetailPage() {
                 src={previewLoad.preview.url}
                 alt={listing.title}
                 className="listing-preview-media"
+                onLoad={markMediaLoaded}
               />
             ) : previewLoad.preview.contentType.startsWith("audio/") ? (
               <audio
                 controls
                 src={previewLoad.preview.url}
                 className="listing-preview-media"
+                onLoadedData={markMediaLoaded}
+                onCanPlay={markMediaLoaded}
               />
             ) : previewLoad.preview.contentType.startsWith("video/") ? (
               <video
                 controls
                 src={previewLoad.preview.url}
                 className="listing-preview-media"
+                onLoadedData={markMediaLoaded}
+                onCanPlay={markMediaLoaded}
               />
             ) : (
               <p className="meta">{msg("previewUnavailable")}</p>
             )}
           </div>
+        )}
+        {previewLoad.status === "unavailable" && (
+          <p className="meta">{msg("previewUnavailable")}</p>
         )}
         <div className="actions">
           <button

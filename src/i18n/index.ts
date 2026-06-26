@@ -50,6 +50,7 @@ export const en = {
   paymentConfirmEscrow: "Held in escrow until delivery",
   paymentConfirmFileType: "File type",
   paymentConfirmRail: "Payment rail",
+  paymentConfirmPlatformFee: "Platform fee",
   paymentConfirmNote:
     "You will sign a Solana transaction in your wallet. USDC is sent via pr402; the file downloads after settlement.",
   paymentConfirmCancel: "Cancel",
@@ -121,6 +122,22 @@ export const en = {
   delistConfirmCancel: "Cancel",
   delistConfirmAction: "Remove listing",
   delistSuccess: "Listing removed.",
+  liveSale: "Live",
+  liveSaleBought: "bought",
+  liveSaleListing: "a listing",
+  liveSaleFor: "for",
+  sortTrending: "Trending",
+  sortNewest: "Newest",
+  sortPrice: "Price",
+  sellerListings: "listings",
+  agentFriendly: "Agent-friendly listing",
+  fieldTags: "Tags (comma-separated or JSON array)",
+  fieldLicense: "License",
+  licensePersonal: "Personal use",
+  licenseCommercial: "Commercial use",
+  agentTags: "Tags",
+  agentLicense: "License",
+  agentContentHash: "Content hash (SHA-256)",
 } as const;
 
 export type Messages = typeof en;
@@ -178,6 +195,7 @@ export const zh: Record<MessageKey, string> = {
   paymentConfirmEscrow: "托管至交付完成",
   paymentConfirmFileType: "文件类型",
   paymentConfirmRail: "支付通道",
+  paymentConfirmPlatformFee: "平台费",
   paymentConfirmNote:
     "您将在钱包中签名 Solana 交易。USDC 通过 pr402 结算，完成后自动下载文件。",
   paymentConfirmCancel: "取消",
@@ -247,6 +265,22 @@ export const zh: Record<MessageKey, string> = {
   delistConfirmCancel: "取消",
   delistConfirmAction: "确认下架",
   delistSuccess: "商品已下架。",
+  liveSale: "实时",
+  liveSaleBought: "购买了",
+  liveSaleListing: "商品",
+  liveSaleFor: "花费",
+  sortTrending: "热门",
+  sortNewest: "最新",
+  sortPrice: "价格",
+  sellerListings: "件商品",
+  agentFriendly: "Agent 友好商品",
+  fieldTags: "标签（逗号分隔或 JSON 数组）",
+  fieldLicense: "许可",
+  licensePersonal: "个人使用",
+  licenseCommercial: "商业使用",
+  agentTags: "标签",
+  agentLicense: "许可",
+  agentContentHash: "内容哈希 (SHA-256)",
 };
 
 export function t(locale: "en" | "zh", key: MessageKey): string {

@@ -3,20 +3,25 @@ import { Link, useSearchParams } from "react-router-dom";
 import { fetchListings, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { ListingCard } from "../components/ListingCard";
+import { LiveSalesTicker } from "../components/LiveSalesTicker";
 import { SellerWalletChip } from "../components/SellerWalletChip";
 import { useLocale } from "../hooks/useLocale";
 import { isSolanaWalletAddress, resolveBrowseSearch } from "../utils/browseSearch";
 
 const FILTER_CATEGORIES = [{ id: "", labelKey: "filterAll" as const }, ...LISTING_CATEGORIES];
 
+type SortMode = "trending" | "newest" | "price_asc" | "price_desc";
+
 export function ForgePage() {
   const { msg } = useLocale();
   const [searchParams] = useSearchParams();
   const sellerWallet = searchParams.get("seller_wallet")?.trim() || undefined;
   const [category, setCategory] = useState("");
+  const [sort, setSort] = useState<SortMode>("trending");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [items, setItems] = useState<Listing[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,14 +40,16 @@ export function ForgePage() {
       category: category || undefined,
       q,
       sellerWallet: searchSellerWallet,
+      sort,
     })
       .then((r) => {
         setItems(r.items);
+        setTotal(r.total);
         setError(null);
       })
       .catch(() => setError(msg("errorLoad")))
       .finally(() => setLoading(false));
-  }, [category, debouncedSearch, sellerWallet, msg]);
+  }, [category, debouncedSearch, sellerWallet, sort, msg]);
 
   const effectiveSellerWallet =
     sellerWallet ??
@@ -56,6 +63,8 @@ export function ForgePage() {
   return (
     <>
       <h1>{msg("browseTitle")}</h1>
+
+      <LiveSalesTicker sellerFilter={sellerWallet} />
 
       <div className="browse-toolbar">
         <input
@@ -79,11 +88,39 @@ export function ForgePage() {
             </button>
           ))}
         </div>
+        <div className="browse-sort">
+          <button
+            type="button"
+            className={`control-btn${sort === "trending" ? " primary" : ""}`}
+            onClick={() => setSort("trending")}
+          >
+            {msg("sortTrending")}
+          </button>
+          <button
+            type="button"
+            className={`control-btn${sort === "newest" ? " primary" : ""}`}
+            onClick={() => setSort("newest")}
+          >
+            {msg("sortNewest")}
+          </button>
+          <button
+            type="button"
+            className={`control-btn${sort === "price_asc" ? " primary" : ""}`}
+            onClick={() => setSort("price_asc")}
+          >
+            {msg("sortPrice")}
+          </button>
+        </div>
       </div>
 
       {effectiveSellerWallet && (
         <div className="seller-filter-banner">
           <SellerWalletChip wallet={effectiveSellerWallet} hideLabel />
+          {sellerWallet && (
+            <span className="seller-storefront-count">
+              {total} {msg("sellerListings")}
+            </span>
+          )}
           {!sellerWallet && (
             <button
               type="button"
