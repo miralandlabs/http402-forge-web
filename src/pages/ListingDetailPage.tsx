@@ -193,7 +193,9 @@ export function ListingDetailPage() {
       );
       setConfirmOpen(false);
       setPaidRetryAvailable(false);
-      triggerDownload(blob, listing?.title ?? "download");
+      if (blob.size > 0) {
+        triggerDownload(blob, listing?.title ?? "download");
+      }
     } catch (e) {
       if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
         setPaidRetryAvailable(true);
@@ -215,7 +217,9 @@ export function ListingDetailPage() {
     try {
       const blob = await retryPaidDownload(id, setPaymentPhase);
       setPaidRetryAvailable(false);
-      triggerDownload(blob, listing?.title ?? "download");
+      if (blob.size > 0) {
+        triggerDownload(blob, listing?.title ?? "download");
+      }
     } catch (e) {
       if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
         setPaidRetryAvailable(true);
@@ -253,7 +257,9 @@ export function ListingDetailPage() {
       );
       setPaidRetryAvailable(false);
       setConfirmOpen(false);
-      triggerDownload(blob, listing?.title ?? "download");
+      if (blob.size > 0) {
+        triggerDownload(blob, listing?.title ?? "download");
+      }
     } catch (e) {
       if (e instanceof PaidDownloadTransferError) {
         setError(msg("downloadPaidRetryHint"));

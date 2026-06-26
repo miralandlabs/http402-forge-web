@@ -11,7 +11,12 @@ import {
   MAX_PREVIEW_BYTES,
   type ListingCategoryId,
 } from "../constants/categories";
-import { createListing, fetchSellerChallenge } from "../services/api";
+import {
+  createListing,
+  createListingPresigned,
+  fetchCapabilities,
+  fetchSellerChallenge,
+} from "../services/api";
 import type { SellerStatus } from "../services/sellerVault";
 import { useLocale } from "../hooks/useLocale";
 
@@ -87,7 +92,27 @@ export function SellPage() {
       if (agentFriendly && license) form.set("license", license);
       form.set("asset", asset, asset.name);
       if (preview) form.set("preview", preview, preview.name);
-      await createListing(form);
+
+      const caps = await fetchCapabilities();
+      if (caps?.presignedUpload) {
+        await createListingPresigned({
+          sellerWallet: wallet,
+          sellerChallenge: challengeMessage,
+          sellerSignature: Buffer.from(signature).toString("base64"),
+          title,
+          description,
+          category,
+          priceUsdc: price,
+          agentFriendly,
+          displayName: undefined,
+          tags: agentFriendly && tags.trim() ? tags.trim() : undefined,
+          license: agentFriendly && license ? license : undefined,
+          asset,
+          preview,
+        });
+      } else {
+        await createListing(form);
+      }
       setPublished(true);
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
