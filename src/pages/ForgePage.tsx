@@ -5,6 +5,7 @@ import { LISTING_CATEGORIES } from "../constants/categories";
 import { ListingCard } from "../components/ListingCard";
 import { SellerWalletChip } from "../components/SellerWalletChip";
 import { useLocale } from "../hooks/useLocale";
+import { isSolanaWalletAddress, resolveBrowseSearch } from "../utils/browseSearch";
 
 const FILTER_CATEGORIES = [{ id: "", labelKey: "filterAll" as const }, ...LISTING_CATEGORIES];
 
@@ -26,10 +27,14 @@ export function ForgePage() {
 
   useEffect(() => {
     setLoading(true);
+    const { q, sellerWallet: searchSellerWallet } = resolveBrowseSearch(
+      debouncedSearch,
+      sellerWallet,
+    );
     fetchListings({
       category: category || undefined,
-      q: debouncedSearch || undefined,
-      sellerWallet,
+      q,
+      sellerWallet: searchSellerWallet,
     })
       .then((r) => {
         setItems(r.items);
@@ -39,8 +44,12 @@ export function ForgePage() {
       .finally(() => setLoading(false));
   }, [category, debouncedSearch, sellerWallet, msg]);
 
+  const effectiveSellerWallet =
+    sellerWallet ??
+    (isSolanaWalletAddress(debouncedSearch) ? debouncedSearch.trim() : undefined);
+
   const emptyMessage =
-    debouncedSearch.length > 0 || sellerWallet
+    debouncedSearch.length > 0 || effectiveSellerWallet
       ? msg("noSearchResults")
       : msg("noListings");
 
@@ -72,12 +81,23 @@ export function ForgePage() {
         </div>
       </div>
 
-      {sellerWallet && (
+      {effectiveSellerWallet && (
         <div className="seller-filter-banner">
-          <SellerWalletChip wallet={sellerWallet} hideLabel />
-          <Link to="/forge" className="seller-filter-clear">
-            {msg("sellerFilterClear")}
-          </Link>
+          <SellerWalletChip wallet={effectiveSellerWallet} hideLabel />
+          {!sellerWallet && (
+            <button
+              type="button"
+              className="seller-filter-clear"
+              onClick={() => setSearch("")}
+            >
+              {msg("sellerFilterClear")}
+            </button>
+          )}
+          {sellerWallet && (
+            <Link to="/forge" className="seller-filter-clear">
+              {msg("sellerFilterClear")}
+            </Link>
+          )}
         </div>
       )}
 
@@ -89,7 +109,7 @@ export function ForgePage() {
           <ListingCard
             key={item.id}
             listing={item}
-            hideSellerWallet={!!sellerWallet}
+            hideSellerWallet={!!effectiveSellerWallet}
           />
         ))}
       </div>
