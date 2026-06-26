@@ -248,14 +248,19 @@ export async function fetchDownloadQuote(listingId: string): Promise<DownloadQuo
   };
 }
 
+export type PaymentProgressPhase = "signing" | "settling" | "downloading";
+
 export async function downloadWithPayment(
   listingId: string,
   challenge: PaymentRequiredBody,
   wallet: WalletSigner,
+  onProgress?: (phase: PaymentProgressPhase) => void,
 ): Promise<Blob> {
   const url = `${API_BASE}/api/v1/listings/${listingId}/download`;
+  onProgress?.("signing");
   const proofJson = await buildPaymentSignature(challenge, wallet, DEFAULT_FACILITATOR);
 
+  onProgress?.("settling");
   const paid = await fetch(url, {
     headers: { "PAYMENT-SIGNATURE": encodePaymentSignatureHeader(proofJson) },
   });
@@ -263,6 +268,8 @@ export async function downloadWithPayment(
     const err = await paid.json().catch(() => ({}));
     throw new Error(err.error ?? err.message ?? `download ${paid.status}`);
   }
+
+  onProgress?.("downloading");
   return paid.blob();
 }
 

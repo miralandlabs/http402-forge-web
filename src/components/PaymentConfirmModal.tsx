@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { PaymentProgressPhase } from "../services/api";
 import type { PaymentConfirmDetails } from "../services/paymentConfirm";
 import { useLocale } from "../hooks/useLocale";
 
@@ -6,6 +7,7 @@ interface PaymentConfirmModalProps {
   open: boolean;
   details: PaymentConfirmDetails;
   busy?: boolean;
+  phase?: PaymentProgressPhase | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -14,10 +16,25 @@ export function PaymentConfirmModal({
   open,
   details,
   busy = false,
+  phase = null,
   onConfirm,
   onCancel,
 }: PaymentConfirmModalProps) {
   const { msg } = useLocale();
+
+  const progressLabel = (() => {
+    if (!busy || !phase) return null;
+    switch (phase) {
+      case "signing":
+        return msg("paymentConfirmSigning");
+      case "settling":
+        return msg("paymentConfirmSettling");
+      case "downloading":
+        return msg("paymentConfirmDownloading");
+      default:
+        return null;
+    }
+  })();
 
   useEffect(() => {
     if (!open) return;
@@ -79,7 +96,12 @@ export function PaymentConfirmModal({
           </div>
         </dl>
 
-        <p className="payment-confirm-note">{msg("paymentConfirmNote")}</p>
+        <p
+          className="payment-confirm-note"
+          aria-live={progressLabel ? "polite" : undefined}
+        >
+          {progressLabel ?? msg("paymentConfirmNote")}
+        </p>
 
         <div className="confirm-actions">
           <button
@@ -96,7 +118,7 @@ export function PaymentConfirmModal({
             disabled={busy}
             onClick={onConfirm}
           >
-            {busy ? msg("loading") : msg("paymentConfirmSign")}
+            {progressLabel ?? msg("paymentConfirmSign")}
           </button>
         </div>
       </div>

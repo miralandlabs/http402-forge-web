@@ -15,6 +15,7 @@ import {
   formatUsdc,
   previewResponseContentType,
   type Listing,
+  type PaymentProgressPhase,
 } from "../services/api";
 import {
   parsePaymentConfirmDetails,
@@ -52,6 +53,9 @@ export function ListingDetailPage() {
     useState<PaymentRequiredBody | null>(null);
   const [confirmDetails, setConfirmDetails] =
     useState<PaymentConfirmDetails | null>(null);
+  const [paymentPhase, setPaymentPhase] = useState<PaymentProgressPhase | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -121,18 +125,25 @@ export function ListingDetailPage() {
   const onConfirmPayment = async () => {
     if (!id || !paymentChallenge || !publicKey || !signTransaction) return;
     setBusy(true);
+    setPaymentPhase(null);
     setError(null);
     try {
-      const blob = await downloadWithPayment(id, paymentChallenge, {
-        publicKey: publicKey.toBase58(),
-        signTransaction,
-      });
+      const blob = await downloadWithPayment(
+        id,
+        paymentChallenge,
+        {
+          publicKey: publicKey.toBase58(),
+          signTransaction,
+        },
+        setPaymentPhase,
+      );
       setConfirmOpen(false);
       triggerDownload(blob, listing?.title ?? "download");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
+      setPaymentPhase(null);
     }
   };
 
@@ -141,6 +152,7 @@ export function ListingDetailPage() {
     setConfirmOpen(false);
     setPaymentChallenge(null);
     setConfirmDetails(null);
+    setPaymentPhase(null);
   };
 
   const isOwner =
@@ -260,6 +272,7 @@ export function ListingDetailPage() {
           open={confirmOpen}
           details={confirmDetails}
           busy={busy}
+          phase={paymentPhase}
           onConfirm={onConfirmPayment}
           onCancel={onCancelPayment}
         />
