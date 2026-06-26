@@ -416,6 +416,24 @@ main {
   color: var(--fair-text-secondary);
 }
 
+.field .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.field .checkbox-label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--fair-primary);
+}
+
 .field input,
 .field textarea,
 .field select {
