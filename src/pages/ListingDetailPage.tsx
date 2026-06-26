@@ -5,6 +5,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Buffer } from "buffer";
 import { DelistConfirmModal } from "../components/DelistConfirmModal";
 import { PaymentConfirmModal } from "../components/PaymentConfirmModal";
+import { SellerWalletChip } from "../components/SellerWalletChip";
 import {
   API_BASE,
   delistListing,
@@ -24,9 +25,14 @@ import {
 import type { PaymentRequiredBody } from "../services/wallet";
 import { useLocale } from "../hooks/useLocale";
 
-type PreviewState =
+type PreviewContent =
   | { kind: "text"; text: string }
   | { kind: "media"; url: string; contentType: string };
+
+type PreviewLoadState =
+  | { status: "loading" }
+  | { status: "ready"; preview: PreviewContent }
+  | { status: "unavailable" };
 
 function triggerDownload(blob: Blob, filename: string) {
   const a = document.createElement("a");
@@ -44,7 +50,9 @@ export function ListingDetailPage() {
   const { publicKey, signMessage, signTransaction } = useWallet();
   const { setVisible } = useWalletModal();
   const [listing, setListing] = useState<Listing | null>(null);
-  const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [previewLoad, setPreviewLoad] = useState<PreviewLoadState>({
+    status: "loading",
+  });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -69,26 +77,36 @@ export function ListingDetailPage() {
     let cancelled = false;
     let objectUrl: string | null = null;
 
+    setPreviewLoad({ status: "loading" });
+
     fetch(`${API_BASE}/api/v1/listings/${id}/preview`)
       .then(async (r) => {
-        if (!r.ok) return;
+        if (!r.ok) {
+          if (!cancelled) setPreviewLoad({ status: "unavailable" });
+          return;
+        }
         const contentType = previewResponseContentType(
           r.headers.get("content-type"),
           listing.contentType,
         );
         if (contentType.startsWith("text/") || contentType.includes("json")) {
           const text = await r.text();
-          if (!cancelled) setPreview({ kind: "text", text });
+          if (!cancelled) {
+            setPreviewLoad({ status: "ready", preview: { kind: "text", text } });
+          }
           return;
         }
         const blob = await r.blob();
         objectUrl = URL.createObjectURL(blob);
         if (!cancelled) {
-          setPreview({ kind: "media", url: objectUrl, contentType });
+          setPreviewLoad({
+            status: "ready",
+            preview: { kind: "media", url: objectUrl, contentType },
+          });
         }
       })
       .catch(() => {
-        if (!cancelled) setPreview(null);
+        if (!cancelled) setPreviewLoad({ status: "unavailable" });
       });
 
     return () => {
@@ -214,7 +232,11 @@ export function ListingDetailPage() {
           {listing.category} · {formatUsdc(listing.priceMicroUsdc)} USDC ·{" "}
           {listing.deliveryScheme}
         </p>
-        <p className="meta">
+        <p className="meta seller-detail-meta">
+          <SellerWalletChip wallet={listing.sellerWallet} linkToSeller />
+          <span className="seller-detail-meta-sep" aria-hidden="true">
+            ·
+          </span>
           <Link
             to={`/forge?seller_wallet=${encodeURIComponent(listing.sellerWallet)}`}
           >
@@ -222,23 +244,40 @@ export function ListingDetailPage() {
           </Link>
         </p>
         <p>{listing.description}</p>
-        {preview && (
+        {previewLoad.status === "loading" && (
+          <div className="preview-box preview-box--loading">
+            <strong>{msg("preview")}</strong>
+            <div className="preview-loading">
+              <span className="preview-spinner" aria-hidden="true" />
+              <span>{msg("previewLoading")}</span>
+            </div>
+          </div>
+        )}
+        {previewLoad.status === "ready" && (
           <div className="preview-box">
             <strong>{msg("preview")}</strong>
-            {preview.kind === "text" ? (
+            {previewLoad.preview.kind === "text" ? (
               <pre style={{ margin: "0.5rem 0 0", whiteSpace: "pre-wrap" }}>
-                {preview.text}
+                {previewLoad.preview.text}
               </pre>
-            ) : preview.contentType.startsWith("image/") ? (
+            ) : previewLoad.preview.contentType.startsWith("image/") ? (
               <img
-                src={preview.url}
+                src={previewLoad.preview.url}
                 alt={listing.title}
                 className="listing-preview-media"
               />
-            ) : preview.contentType.startsWith("audio/") ? (
-              <audio controls src={preview.url} className="listing-preview-media" />
-            ) : preview.contentType.startsWith("video/") ? (
-              <video controls src={preview.url} className="listing-preview-media" />
+            ) : previewLoad.preview.contentType.startsWith("audio/") ? (
+              <audio
+                controls
+                src={previewLoad.preview.url}
+                className="listing-preview-media"
+              />
+            ) : previewLoad.preview.contentType.startsWith("video/") ? (
+              <video
+                controls
+                src={previewLoad.preview.url}
+                className="listing-preview-media"
+              />
             ) : (
               <p className="meta">{msg("previewUnavailable")}</p>
             )}

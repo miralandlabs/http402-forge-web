@@ -614,6 +614,124 @@ main {
   word-break: break-word;
 }
 
+.preview-box--loading {
+  min-height: 8rem;
+}
+
+.preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+  min-height: 6rem;
+  color: var(--fair-text-muted);
+  font-size: 0.9rem;
+}
+
+.preview-spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--fair-border);
+  border-top-color: var(--fair-primary);
+  border-radius: 50%;
+  animation: preview-spin 0.7s linear infinite;
+}
+
+@keyframes preview-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.seller-wallet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.seller-wallet-chip--subtle {
+  font-size: 0.78rem;
+}
+
+.seller-wallet-chip-label {
+  color: var(--fair-text-muted);
+  font-size: 0.85em;
+}
+
+.seller-wallet-chip-addr {
+  font-family: var(--font-code);
+  font-size: 0.9em;
+  color: var(--fair-text-secondary);
+  text-decoration: none;
+}
+
+a.seller-wallet-chip-addr:hover {
+  color: var(--fair-primary);
+  text-decoration: underline;
+}
+
+.seller-wallet-chip-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  border: none;
+  background: transparent;
+  color: var(--fair-text-muted);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.seller-wallet-chip-copy:hover {
+  color: var(--fair-primary);
+  background: var(--fair-accent-surface);
+}
+
+.seller-wallet-chip-copied {
+  font-size: 0.75rem;
+  color: var(--fair-primary);
+}
+
+.seller-detail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.seller-detail-meta-sep {
+  color: var(--fair-text-muted);
+}
+
+.forge-card-seller {
+  margin: 0;
+}
+
+.seller-filter-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--fair-border);
+  border-radius: 0.5rem;
+  background: var(--fair-accent-surface);
+}
+
+.seller-filter-clear {
+  font-size: 0.85rem;
+  color: var(--fair-primary);
+  text-decoration: none;
+}
+
+.seller-filter-clear:hover {
+  text-decoration: underline;
+}
+
 .listing-preview-media {
   display: block;
   max-width: 100%;

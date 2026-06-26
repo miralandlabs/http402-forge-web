@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { fetchListings, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { ListingCard } from "../components/ListingCard";
+import { SellerWalletChip } from "../components/SellerWalletChip";
 import { useLocale } from "../hooks/useLocale";
 
 const FILTER_CATEGORIES = [{ id: "", labelKey: "filterAll" as const }, ...LISTING_CATEGORIES];
@@ -71,12 +72,25 @@ export function ForgePage() {
         </div>
       </div>
 
+      {sellerWallet && (
+        <div className="seller-filter-banner">
+          <SellerWalletChip wallet={sellerWallet} hideLabel />
+          <Link to="/forge" className="seller-filter-clear">
+            {msg("sellerFilterClear")}
+          </Link>
+        </div>
+      )}
+
       {loading && <p>{msg("loading")}</p>}
       {error && <p className="error">{error}</p>}
       {!loading && !error && items.length === 0 && <p>{emptyMessage}</p>}
       <div className="grid forge-grid">
         {items.map((item) => (
-          <ListingCard key={item.id} listing={item} />
+          <ListingCard
+            key={item.id}
+            listing={item}
+            hideSellerWallet={!!sellerWallet}
+          />
         ))}
       </div>
     </>
