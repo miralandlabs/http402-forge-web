@@ -250,6 +250,82 @@ export async function fetchDownloadQuote(listingId: string): Promise<DownloadQuo
 
 export type PaymentProgressPhase = "signing" | "settling" | "downloading";
 
+const downloadProofKey = (listingId: string) => `forge:download-proof:${listingId}`;
+
+export function getCachedDownloadProof(listingId: string): string | null {
+  try {
+    return sessionStorage.getItem(downloadProofKey(listingId));
+  } catch {
+    return null;
+  }
+}
+
+function cacheDownloadProof(listingId: string, proofJson: string) {
+  try {
+    sessionStorage.setItem(downloadProofKey(listingId), proofJson);
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+export function clearDownloadProof(listingId: string) {
+  try {
+    sessionStorage.removeItem(downloadProofKey(listingId));
+  } catch {
+    /* ignore */
+  }
+}
+
+export class PaidDownloadTransferError extends Error {
+  readonly listingId: string;
+
+  constructor(listingId: string, cause: unknown) {
+    const detail =
+      cause instanceof Error && cause.message ? cause.message : "network error";
+    super(detail);
+    this.name = "PaidDownloadTransferError";
+    this.listingId = listingId;
+  }
+}
+
+async function downloadWithStoredProof(
+  listingId: string,
+  proofJson: string,
+  onProgress?: (phase: PaymentProgressPhase) => void,
+): Promise<Blob> {
+  const url = `${API_BASE}/api/v1/listings/${listingId}/download`;
+  onProgress?.("downloading");
+  const paid = await fetch(url, {
+    headers: { "PAYMENT-SIGNATURE": encodePaymentSignatureHeader(proofJson) },
+  });
+  if (!paid.ok) {
+    const err = await paid.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string; message?: string }).error ??
+        (err as { message?: string }).message ??
+        `download ${paid.status}`,
+    );
+  }
+  try {
+    const blob = await paid.blob();
+    clearDownloadProof(listingId);
+    return blob;
+  } catch (e) {
+    throw new PaidDownloadTransferError(listingId, e);
+  }
+}
+
+export async function retryPaidDownload(
+  listingId: string,
+  onProgress?: (phase: PaymentProgressPhase) => void,
+): Promise<Blob> {
+  const proofJson = getCachedDownloadProof(listingId);
+  if (!proofJson) {
+    throw new Error("No saved payment proof for this listing.");
+  }
+  return downloadWithStoredProof(listingId, proofJson, onProgress);
+}
+
 export async function downloadWithPayment(
   listingId: string,
   challenge: PaymentRequiredBody,
@@ -269,8 +345,15 @@ export async function downloadWithPayment(
     throw new Error(err.error ?? err.message ?? `download ${paid.status}`);
   }
 
+  cacheDownloadProof(listingId, proofJson);
   onProgress?.("downloading");
-  return paid.blob();
+  try {
+    const blob = await paid.blob();
+    clearDownloadProof(listingId);
+    return blob;
+  } catch (e) {
+    throw new PaidDownloadTransferError(listingId, e);
+  }
 }
 
 export async function payAndDownload(

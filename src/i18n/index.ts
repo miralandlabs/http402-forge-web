@@ -60,6 +60,9 @@ export const en = {
   paymentConfirmSigning: "Waiting for wallet signature…",
   paymentConfirmSettling: "Confirming payment…",
   paymentConfirmDownloading: "Payment confirmed — downloading…",
+  downloadPaidRetryHint:
+    "Payment went through but the file transfer failed. Retry download — you will not be charged again.",
+  retryPaidDownload: "Retry download (already paid)",
   preview: "Preview",
   viewDetails: "View details",
   previewUnavailable: "Preview unavailable for this file type.",
@@ -217,6 +220,9 @@ export const zh: Record<MessageKey, string> = {
   paymentConfirmSigning: "等待钱包签名…",
   paymentConfirmSettling: "正在确认支付…",
   paymentConfirmDownloading: "支付已确认 — 正在下载…",
+  downloadPaidRetryHint:
+    "支付已成功，但文件传输失败。请重试下载 — 不会再次扣款。",
+  retryPaidDownload: "重试下载（已付款）",
   preview: "预览",
   viewDetails: "查看详情",
   previewUnavailable: "此文件类型暂无预览。",

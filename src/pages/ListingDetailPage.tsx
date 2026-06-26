@@ -13,6 +13,9 @@ import {
   fetchDownloadQuote,
   fetchListing,
   formatUsdc,
+  getCachedDownloadProof,
+  PaidDownloadTransferError,
+  retryPaidDownload,
   type Listing,
   type PaymentProgressPhase,
 } from "../services/api";
@@ -69,6 +72,12 @@ export function ListingDetailPage() {
   const [paymentPhase, setPaymentPhase] = useState<PaymentProgressPhase | null>(
     null,
   );
+  const [paidRetryAvailable, setPaidRetryAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    setPaidRetryAvailable(!!getCachedDownloadProof(id));
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -182,9 +191,37 @@ export function ListingDetailPage() {
         setPaymentPhase,
       );
       setConfirmOpen(false);
+      setPaidRetryAvailable(false);
       triggerDownload(blob, listing?.title ?? "download");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
+        setPaidRetryAvailable(true);
+        setError(msg("downloadPaidRetryHint"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setBusy(false);
+      setPaymentPhase(null);
+    }
+  };
+
+  const onRetryPaidDownload = async () => {
+    if (!id) return;
+    setBusy(true);
+    setPaymentPhase(null);
+    setError(null);
+    try {
+      const blob = await retryPaidDownload(id, setPaymentPhase);
+      setPaidRetryAvailable(false);
+      triggerDownload(blob, listing?.title ?? "download");
+    } catch (e) {
+      if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
+        setPaidRetryAvailable(true);
+        setError(msg("downloadPaidRetryHint"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setBusy(false);
       setPaymentPhase(null);
@@ -364,6 +401,16 @@ export function ListingDetailPage() {
           <p className="meta">{msg("previewUnavailable")}</p>
         )}
         <div className="actions">
+          {paidRetryAvailable && (
+            <button
+              type="button"
+              className="control-btn primary"
+              disabled={busy}
+              onClick={() => void onRetryPaidDownload()}
+            >
+              {busy ? msg("paymentConfirmDownloading") : msg("retryPaidDownload")}
+            </button>
+          )}
           <button
             type="button"
             className="control-btn primary"
