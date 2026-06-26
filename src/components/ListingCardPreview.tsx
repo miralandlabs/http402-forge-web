@@ -1,18 +1,36 @@
-import { useEffect, useState } from "react";
-import { API_BASE, type Listing } from "../services/api";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { LISTING_CATEGORIES } from "../constants/categories";
-import { MediaPreviewFrame } from "./MediaPreviewFrame";
 import { ArchivePreviewBadge, isZipContentType } from "./ArchivePreviewBadge";
+import { ListingPreviewMedia } from "./ListingPreviewMedia";
 import { useLocale } from "../hooks/useLocale";
+import { onCardMediaPause, onCardMediaPlay } from "../utils/mediaPreviewCoordinator";
+import {
+  fetchTextPreview,
+  listingPreviewUrl,
+  previewRenderKind,
+  resolvePreviewContentType,
+} from "../utils/listingPreview";
+import type { Listing } from "../services/api";
 
 type PreviewState =
   | { status: "loading" }
   | { status: "text"; text: string }
-  | { status: "media"; url: string; contentType: string }
+  | { status: "media"; url: string; contentType: string; loaded: boolean }
   | { status: "empty" };
 
 interface ListingCardPreviewProps {
   listing: Listing;
+}
+
+function mediaPlayHandlers() {
+  return {
+    onPlay: (e: SyntheticEvent<HTMLMediaElement>) => {
+      onCardMediaPlay(e.currentTarget);
+    },
+    onPause: (e: SyntheticEvent<HTMLMediaElement>) => {
+      onCardMediaPause(e.currentTarget);
+    },
+  };
 }
 
 export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
@@ -20,34 +38,44 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
   const [preview, setPreview] = useState<PreviewState>({ status: "loading" });
   const audioLabel =
     LISTING_CATEGORIES.find((c) => c.id === "audio")?.labelKey ?? "categoryAudio";
+  const previewLabel = `${msg("preview")}: ${listing.title}`;
 
   useEffect(() => {
     let cancelled = false;
-    let objectUrl: string | null = null;
-
     setPreview({ status: "loading" });
-    fetch(`${API_BASE}/api/v1/listings/${listing.id}/preview`)
-      .then(async (res) => {
-        if (!res.ok) {
-          if (!cancelled) setPreview({ status: "empty" });
-          return;
-        }
-        const contentType = res.headers.get("content-type") ?? "";
-        if (contentType.startsWith("text/") || contentType.includes("json")) {
-          const text = await res.text();
-          if (!cancelled) {
-            setPreview({
-              status: "text",
-              text: text.trim() || listing.description.slice(0, 280),
+
+    resolvePreviewContentType(listing)
+      .then((previewContentType) => {
+        if (cancelled) return;
+        const kind = previewRenderKind(previewContentType);
+        if (kind === "text") {
+          fetchTextPreview(listing)
+            .then((text) => {
+              if (cancelled) return;
+              if (text) {
+                setPreview({ status: "text", text });
+              } else {
+                setPreview({
+                  status: "text",
+                  text: listing.description.slice(0, 280),
+                });
+              }
+            })
+            .catch(() => {
+              if (!cancelled) setPreview({ status: "empty" });
             });
-          }
           return;
         }
-        const blob = await res.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (!cancelled) {
-          setPreview({ status: "media", url: objectUrl, contentType });
+        if (kind === "unavailable") {
+          setPreview({ status: "empty" });
+          return;
         }
+        setPreview({
+          status: "media",
+          url: listingPreviewUrl(listing),
+          contentType: previewContentType,
+          loaded: false,
+        });
       })
       .catch(() => {
         if (!cancelled) setPreview({ status: "empty" });
@@ -55,23 +83,44 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [listing.id, listing.description]);
+  }, [listing]);
+
+  const markMediaLoaded = () => {
+    setPreview((prev) =>
+      prev.status === "media" ? { ...prev, loaded: true } : prev,
+    );
+  };
+
+  const markMediaFailed = () => {
+    setPreview({
+      status: "text",
+      text: listing.description.slice(0, 280),
+    });
+  };
 
   const isZip = isZipContentType(listing.contentType);
+  const previewKind =
+    preview.status === "media"
+      ? previewRenderKind(preview.contentType)
+      : "unavailable";
   const showZipBadge =
     isZip &&
     (preview.status === "empty" ||
       preview.status === "text" ||
-      (preview.status === "media" &&
-        !preview.contentType.startsWith("image/") &&
-        !preview.contentType.startsWith("video/") &&
-        !preview.contentType.startsWith("audio/")));
+      previewKind === "unavailable");
+
+  const isInteractiveMedia =
+    preview.status === "media" &&
+    (previewKind === "video" || previewKind === "audio");
+
+  const showMediaLoading = preview.status === "media" && !preview.loaded;
 
   return (
-    <div className="forge-card-preview" aria-hidden>
-      {preview.status === "loading" && (
+    <div
+      className={`forge-card-preview${isInteractiveMedia ? " forge-card-preview--interactive" : ""}${preview.status === "media" && previewKind === "audio" ? " forge-card-preview--audio" : ""}${preview.status === "media" && previewKind === "pdf" ? " forge-card-preview--pdf" : ""}`}
+    >
+      {(preview.status === "loading" || showMediaLoading) && (
         <div className="forge-card-preview-placeholder">{msg("loading")}</div>
       )}
       {showZipBadge && <ArchivePreviewBadge />}
@@ -81,30 +130,26 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
       {!showZipBadge && preview.status === "text" && (
         <p className="forge-card-preview-text">{preview.text}</p>
       )}
-      {preview.status === "media" && preview.contentType.startsWith("image/") && (
-        <img src={preview.url} alt="" className="forge-card-preview-media" />
+      {preview.status === "media" && (
+        <ListingPreviewMedia
+          url={preview.url}
+          contentType={preview.contentType}
+          title={listing.title}
+          previewLabel={previewLabel}
+          audioLabel={msg(audioLabel)}
+          imageClassName="forge-card-preview-media"
+          videoClassName="forge-card-preview-media forge-card-preview-video"
+          audioClassName="forge-card-preview-audio"
+          pdfClassName="forge-card-preview-pdf"
+          onLoaded={markMediaLoaded}
+          onFailed={markMediaFailed}
+          mediaPlayHandlers={mediaPlayHandlers()}
+          showAudioHeader={previewKind === "audio"}
+        />
       )}
-      {preview.status === "media" && preview.contentType.startsWith("video/") && (
-        <MediaPreviewFrame kind="video">
-          <video
-            src={preview.url}
-            className="forge-card-preview-media"
-            muted
-            playsInline
-            preload="metadata"
-          />
-        </MediaPreviewFrame>
+      {preview.status === "media" && previewKind === "unavailable" && !showZipBadge && (
+        <div className="forge-card-preview-placeholder">{msg("previewUnavailable")}</div>
       )}
-      {preview.status === "media" && preview.contentType.startsWith("audio/") && (
-        <MediaPreviewFrame kind="audio" label={msg(audioLabel)} />
-      )}
-      {preview.status === "media" &&
-        !preview.contentType.startsWith("image/") &&
-        !preview.contentType.startsWith("video/") &&
-        !preview.contentType.startsWith("audio/") &&
-        !showZipBadge && (
-          <div className="forge-card-preview-placeholder">{msg("previewUnavailable")}</div>
-        )}
     </div>
   );
 }

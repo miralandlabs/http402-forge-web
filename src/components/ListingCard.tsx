@@ -3,12 +3,14 @@ import { formatUsdc, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { useLocale } from "../hooks/useLocale";
 import { ListingCardPreview } from "./ListingCardPreview";
+import { SellerWalletChip } from "./SellerWalletChip";
 
 interface ListingCardProps {
   listing: Listing;
+  hideSellerWallet?: boolean;
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, hideSellerWallet = false }: ListingCardProps) {
   const { msg } = useLocale();
   const categoryLabel =
     LISTING_CATEGORIES.find((c) => c.id === listing.category)?.labelKey ??
@@ -16,18 +18,21 @@ export function ListingCard({ listing }: ListingCardProps) {
 
   return (
     <article className="card forge-card">
-      <Link
-        to={`/forge/${listing.id}`}
-        className="forge-card-preview-link"
-        aria-label={`${msg("viewDetails")}: ${listing.title}`}
-      >
-        <ListingCardPreview listing={listing} />
-      </Link>
+      <ListingCardPreview listing={listing} />
       <div className="forge-card-body">
-        <h3>{listing.title}</h3>
+        <h3>
+          <Link to={`/forge/${listing.id}`} className="forge-card-title-link">
+            {listing.title}
+          </Link>
+        </h3>
         <p className="meta">
           {categoryLabel ? msg(categoryLabel) : listing.category}
         </p>
+        {!hideSellerWallet && (
+          <p className="meta forge-card-seller">
+            <SellerWalletChip wallet={listing.sellerWallet} linkToSeller subtle />
+          </p>
+        )}
         <p className="forge-card-desc">{listing.description.slice(0, 120)}</p>
         <p className="price">
           {msg("priceLabel")}: {formatUsdc(listing.priceMicroUsdc)} USDC

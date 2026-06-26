@@ -1,6 +1,6 @@
 # http402-forge-web
 
-Production UI for [http402.trade](https://http402.trade) — emerald theme, EN/中文, wallet checkout.
+Http402 Trade Production UI for [http402.trade](https://http402.trade) — emerald theme, EN/中文, wallet checkout.
 
 ```bash
 npm install

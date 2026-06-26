@@ -23,6 +23,10 @@ export interface Listing {
   agentFriendly: boolean;
   deliveryScheme: string;
   previewUrl: string;
+  previewContentType: string;
+  tags: string[];
+  license?: string;
+  contentHash?: string;
   createdAt: string;
 }
 
@@ -41,6 +45,14 @@ function parseListing(raw: Record<string, unknown>): Listing {
     agentFriendly: Boolean(raw.agentFriendly ?? raw.agent_friendly),
     deliveryScheme: String(raw.deliveryScheme ?? raw.delivery_scheme ?? ""),
     previewUrl: String(raw.previewUrl ?? raw.preview_url ?? ""),
+    previewContentType: String(
+      raw.previewContentType ?? raw.preview_content_type ?? "",
+    ),
+    tags: Array.isArray(raw.tags)
+      ? (raw.tags as unknown[]).map(String)
+      : [],
+    license: (raw.license as string | undefined) ?? undefined,
+    contentHash: String(raw.contentHash ?? raw.content_hash ?? "") || undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
@@ -53,11 +65,13 @@ export interface ListResponse {
 export async function fetchListings(params: {
   category?: string;
   q?: string;
+  sellerWallet?: string;
   sort?: string;
 }): Promise<ListResponse> {
   const q = new URLSearchParams();
   if (params.category) q.set("category", params.category);
   if (params.q) q.set("q", params.q);
+  if (params.sellerWallet) q.set("seller_wallet", params.sellerWallet);
   if (params.sort) q.set("sort", params.sort);
   const res = await fetch(`${API_BASE}/api/v1/listings?${q}`);
   if (!res.ok) throw new Error(`listings ${res.status}`);
@@ -97,6 +111,66 @@ export async function fetchSellerChallenge(
     message: String(raw.message ?? ""),
     expiresAt: String(raw.expiresAt ?? raw.expires_at ?? ""),
   };
+}
+
+export async function fetchDelistChallenge(
+  sellerWallet: string,
+  listingId: string,
+): Promise<SellerChallenge> {
+  const q = new URLSearchParams({
+    seller_wallet: sellerWallet,
+    listing_id: listingId,
+  });
+  const res = await fetch(`${API_BASE}/api/v1/seller/delist-challenge?${q}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let err = {} as { error?: string };
+    if (text) {
+      try {
+        err = JSON.parse(text);
+      } catch {
+        /* plain 404 from stale API without route */
+      }
+    }
+    if (res.status === 404 && !text.trim()) {
+      throw new Error(
+        "Delist API is not available on this host (stale deploy). Redeploy http402-forge-api.",
+      );
+    }
+    throw new Error(err.error ?? `delist-challenge ${res.status}`);
+  }
+  const raw = (await res.json()) as Record<string, unknown>;
+  return {
+    message: String(raw.message ?? ""),
+    expiresAt: String(raw.expiresAt ?? raw.expires_at ?? ""),
+  };
+}
+
+export async function delistListing(
+  listingId: string,
+  sellerWallet: string,
+  sellerChallenge: string,
+  sellerSignature: string,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/v1/listings/${listingId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      seller_wallet: sellerWallet,
+      seller_challenge: sellerChallenge,
+      seller_signature: sellerSignature,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string; message?: string }).error ??
+        (err as { message?: string }).message ??
+        `delist ${res.status}`,
+    );
+  }
 }
 
 export async function createListing(form: FormData): Promise<Listing> {
@@ -161,14 +235,19 @@ export async function fetchDownloadQuote(listingId: string): Promise<DownloadQuo
   };
 }
 
+export type PaymentProgressPhase = "signing" | "settling" | "downloading";
+
 export async function downloadWithPayment(
   listingId: string,
   challenge: PaymentRequiredBody,
   wallet: WalletSigner,
+  onProgress?: (phase: PaymentProgressPhase) => void,
 ): Promise<Blob> {
   const url = `${API_BASE}/api/v1/listings/${listingId}/download`;
+  onProgress?.("signing");
   const proofJson = await buildPaymentSignature(challenge, wallet, DEFAULT_FACILITATOR);
 
+  onProgress?.("settling");
   const paid = await fetch(url, {
     headers: { "PAYMENT-SIGNATURE": encodePaymentSignatureHeader(proofJson) },
   });
@@ -176,6 +255,8 @@ export async function downloadWithPayment(
     const err = await paid.json().catch(() => ({}));
     throw new Error(err.error ?? err.message ?? `download ${paid.status}`);
   }
+
+  onProgress?.("downloading");
   return paid.blob();
 }
 

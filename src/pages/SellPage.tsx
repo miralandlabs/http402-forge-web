@@ -23,6 +23,9 @@ export function SellPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<ListingCategoryId>("art");
   const [price, setPrice] = useState("0.05");
+  const [agentFriendly, setAgentFriendly] = useState(false);
+  const [tags, setTags] = useState("");
+  const [license, setLicense] = useState("");
   const [asset, setAsset] = useState<File | null>(null);
   const [preview, setPreview] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +82,9 @@ export function SellPage() {
       form.set("description", description);
       form.set("category", category);
       form.set("price_usdc", price);
+      form.set("agent_friendly", agentFriendly ? "true" : "false");
+      if (agentFriendly && tags.trim()) form.set("tags", tags.trim());
+      if (agentFriendly && license) form.set("license", license);
       form.set("asset", asset, asset.name);
       if (preview) form.set("preview", preview, preview.name);
       await createListing(form);
@@ -178,6 +184,43 @@ export function SellPage() {
                 required
               />
             </div>
+
+            <div className="field">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={agentFriendly}
+                  onChange={(e) => setAgentFriendly(e.target.checked)}
+                />
+                {msg("agentFriendly")}
+              </label>
+            </div>
+
+            {agentFriendly && (
+              <>
+                <div className="field">
+                  <label htmlFor="tags">{msg("fieldTags")}</label>
+                  <input
+                    id="tags"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    placeholder="prompt, agent, workflow"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="license">{msg("fieldLicense")}</label>
+                  <select
+                    id="license"
+                    value={license}
+                    onChange={(e) => setLicense(e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option value="personal">{msg("licensePersonal")}</option>
+                    <option value="commercial">{msg("licenseCommercial")}</option>
+                  </select>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="sell-uploads">

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LiveSalesTicker } from "../components/LiveSalesTicker";
 import { useLocale } from "../hooks/useLocale";
 
 export function HomePage() {
@@ -6,6 +7,7 @@ export function HomePage() {
 
   return (
     <section className="hero">
+      <LiveSalesTicker />
       <h1>{msg("homeTitle")}</h1>
       <p>{msg("homeBody")}</p>
       <div className="actions" style={{ marginTop: "1.5rem" }}>
