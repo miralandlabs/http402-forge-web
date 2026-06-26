@@ -23,6 +23,7 @@ export interface Listing {
   agentFriendly: boolean;
   deliveryScheme: string;
   previewUrl: string;
+  previewContentType: string;
   tags: string[];
   license?: string;
   contentHash?: string;
@@ -44,6 +45,9 @@ function parseListing(raw: Record<string, unknown>): Listing {
     agentFriendly: Boolean(raw.agentFriendly ?? raw.agent_friendly),
     deliveryScheme: String(raw.deliveryScheme ?? raw.delivery_scheme ?? ""),
     previewUrl: String(raw.previewUrl ?? raw.preview_url ?? ""),
+    previewContentType: String(
+      raw.previewContentType ?? raw.preview_content_type ?? "",
+    ),
     tags: Array.isArray(raw.tags)
       ? (raw.tags as unknown[]).map(String)
       : [],
@@ -87,31 +91,6 @@ export async function fetchListing(id: string): Promise<Listing> {
 export function formatUsdc(micro: number): string {
   if (!Number.isFinite(micro)) return "—";
   return (micro / 1_000_000).toFixed(micro % 1_000_000 === 0 ? 2 : 4);
-}
-
-/** R2 often omits Content-Type on GET; fall back to listing asset type for previews. */
-export function previewResponseContentType(
-  headerValue: string | null,
-  listingContentType: string,
-): string {
-  const header = (headerValue ?? "").split(";")[0]?.trim() ?? "";
-  if (
-    header.startsWith("image/") ||
-    header.startsWith("video/") ||
-    header.startsWith("audio/")
-  ) {
-    return header;
-  }
-  const listing = listingContentType.split(";")[0]?.trim() ?? "";
-  if (
-    (header === "" || header === "application/octet-stream") &&
-    (listing.startsWith("image/") ||
-      listing.startsWith("video/") ||
-      listing.startsWith("audio/"))
-  ) {
-    return listing;
-  }
-  return header;
 }
 
 export interface SellerChallenge {

@@ -98,7 +98,8 @@ export const en = {
   fieldAsset: "Asset file (buyers download after payment)",
   fieldAssetHint: "Max 50 MB — the paid download delivered to buyers",
   fieldPreview: "Preview file (optional)",
-  fieldPreviewHint: "Max 5 MB — shown free on the listing page before purchase",
+  fieldPreviewHint:
+    "Max 5 MB — image, audio, video, or text teaser. PDF previews are rasterized to a thumbnail; PNG/JPG recommended for documents.",
   uploadAssetEmpty: "Click to choose the paid asset (image, audio, zip, etc.)",
   uploadPreviewEmpty: "Click to add a free preview (optional)",
   clearFile: "Clear",
@@ -242,7 +243,8 @@ export const zh: Record<MessageKey, string> = {
   fieldAsset: "资产文件（付款后下载）",
   fieldAssetHint: "最大 50 MB — 买家付费后获得的文件",
   fieldPreview: "预览文件（可选）",
-  fieldPreviewHint: "最大 5 MB — 购买前在商品页免费展示",
+  fieldPreviewHint:
+    "最大 5 MB — 图片、音视频或文字摘要。PDF 预览会转为缩略图；文档类建议上传 PNG/JPG。",
   uploadAssetEmpty: "点击选择付费资产（图片、音频、压缩包等）",
   uploadPreviewEmpty: "点击添加免费预览（可选）",
   clearFile: "清除",

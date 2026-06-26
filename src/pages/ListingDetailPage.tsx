@@ -22,10 +22,12 @@ import {
 } from "../services/paymentConfirm";
 import type { PaymentRequiredBody } from "../services/wallet";
 import { useLocale } from "../hooks/useLocale";
+import { ListingPreviewMedia } from "../components/ListingPreviewMedia";
 import {
   fetchTextPreview,
-  listingPreviewMediaType,
   listingPreviewUrl,
+  previewRenderKind,
+  resolvePreviewContentType,
 } from "../utils/listingPreview";
 
 type PreviewContent =
@@ -78,30 +80,43 @@ export function ListingDetailPage() {
   useEffect(() => {
     if (!listing) return;
     let cancelled = false;
-
-    const mediaKind = listingPreviewMediaType(listing);
-    if (mediaKind === "media") {
-      setPreviewLoad({
-        status: "ready",
-        preview: {
-          kind: "media",
-          url: listingPreviewUrl(listing),
-          contentType: listing.contentType,
-          loaded: false,
-        },
-      });
-      return;
-    }
-
     setPreviewLoad({ status: "loading" });
-    fetchTextPreview(listing)
-      .then((text) => {
+
+    resolvePreviewContentType(listing)
+      .then((previewContentType) => {
         if (cancelled) return;
-        if (text) {
-          setPreviewLoad({ status: "ready", preview: { kind: "text", text } });
-        } else {
-          setPreviewLoad({ status: "unavailable" });
+        const kind = previewRenderKind(previewContentType);
+        if (kind === "text") {
+          fetchTextPreview(listing)
+            .then((text) => {
+              if (cancelled) return;
+              if (text) {
+                setPreviewLoad({
+                  status: "ready",
+                  preview: { kind: "text", text },
+                });
+              } else {
+                setPreviewLoad({ status: "unavailable" });
+              }
+            })
+            .catch(() => {
+              if (!cancelled) setPreviewLoad({ status: "unavailable" });
+            });
+          return;
         }
+        if (kind === "unavailable") {
+          setPreviewLoad({ status: "unavailable" });
+          return;
+        }
+        setPreviewLoad({
+          status: "ready",
+          preview: {
+            kind: "media",
+            url: listingPreviewUrl(listing),
+            contentType: previewContentType,
+            loaded: false,
+          },
+        });
       })
       .catch(() => {
         if (!cancelled) setPreviewLoad({ status: "unavailable" });
@@ -111,6 +126,10 @@ export function ListingDetailPage() {
       cancelled = true;
     };
   }, [listing]);
+
+  const markMediaFailed = () => {
+    setPreviewLoad({ status: "unavailable" });
+  };
 
   const markMediaLoaded = () => {
     setPreviewLoad((prev) => {
@@ -307,35 +326,26 @@ export function ListingDetailPage() {
               <pre style={{ margin: "0.5rem 0 0", whiteSpace: "pre-wrap" }}>
                 {previewLoad.preview.text}
               </pre>
-            ) : previewLoad.preview.contentType.startsWith("image/") ? (
-              <img
-                src={previewLoad.preview.url}
-                alt={listing.title}
-                className="listing-preview-media"
-                onLoad={markMediaLoaded}
-              />
-            ) : previewLoad.preview.contentType.startsWith("audio/") ? (
-              <audio
-                controls
-                preload="metadata"
-                src={previewLoad.preview.url}
-                className="listing-preview-media"
-                onLoadedData={markMediaLoaded}
-                onCanPlay={markMediaLoaded}
-              />
-            ) : previewLoad.preview.contentType.startsWith("video/") ? (
-              <video
-                controls
-                playsInline
-                preload="metadata"
-                src={previewLoad.preview.url}
-                className="listing-preview-media"
-                onLoadedData={markMediaLoaded}
-                onCanPlay={markMediaLoaded}
-              />
             ) : (
-              <p className="meta">{msg("previewUnavailable")}</p>
+              <ListingPreviewMedia
+                url={previewLoad.preview.url}
+                contentType={previewLoad.preview.contentType}
+                title={listing.title}
+                previewLabel={`${msg("preview")}: ${listing.title}`}
+                audioLabel={msg("categoryAudio")}
+                imageClassName="listing-preview-media"
+                videoClassName="listing-preview-media"
+                audioClassName="listing-preview-media"
+                pdfClassName="listing-preview-pdf"
+                onLoaded={markMediaLoaded}
+                onFailed={markMediaFailed}
+              />
             )}
+            {previewLoad.preview.kind === "media" &&
+              previewRenderKind(previewLoad.preview.contentType) ===
+                "unavailable" && (
+                <p className="meta">{msg("previewUnavailable")}</p>
+              )}
           </div>
         )}
         {previewLoad.status === "unavailable" && (

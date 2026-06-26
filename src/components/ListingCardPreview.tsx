@@ -1,13 +1,14 @@
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { LISTING_CATEGORIES } from "../constants/categories";
-import { MediaPreviewFrame } from "./MediaPreviewFrame";
 import { ArchivePreviewBadge, isZipContentType } from "./ArchivePreviewBadge";
+import { ListingPreviewMedia } from "./ListingPreviewMedia";
 import { useLocale } from "../hooks/useLocale";
 import { onCardMediaPause, onCardMediaPlay } from "../utils/mediaPreviewCoordinator";
 import {
   fetchTextPreview,
-  listingPreviewMediaType,
   listingPreviewUrl,
+  previewRenderKind,
+  resolvePreviewContentType,
 } from "../utils/listingPreview";
 import type { Listing } from "../services/api";
 
@@ -38,33 +39,43 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
   const audioLabel =
     LISTING_CATEGORIES.find((c) => c.id === "audio")?.labelKey ?? "categoryAudio";
   const previewLabel = `${msg("preview")}: ${listing.title}`;
-  const mediaKind = listingPreviewMediaType(listing);
 
   useEffect(() => {
     let cancelled = false;
-
-    if (mediaKind === "media") {
-      setPreview({
-        status: "media",
-        url: listingPreviewUrl(listing),
-        contentType: listing.contentType,
-        loaded: false,
-      });
-      return;
-    }
-
     setPreview({ status: "loading" });
-    fetchTextPreview(listing)
-      .then((text) => {
+
+    resolvePreviewContentType(listing)
+      .then((previewContentType) => {
         if (cancelled) return;
-        if (text) {
-          setPreview({ status: "text", text });
-        } else {
-          setPreview({
-            status: "text",
-            text: listing.description.slice(0, 280),
-          });
+        const kind = previewRenderKind(previewContentType);
+        if (kind === "text") {
+          fetchTextPreview(listing)
+            .then((text) => {
+              if (cancelled) return;
+              if (text) {
+                setPreview({ status: "text", text });
+              } else {
+                setPreview({
+                  status: "text",
+                  text: listing.description.slice(0, 280),
+                });
+              }
+            })
+            .catch(() => {
+              if (!cancelled) setPreview({ status: "empty" });
+            });
+          return;
         }
+        if (kind === "unavailable") {
+          setPreview({ status: "empty" });
+          return;
+        }
+        setPreview({
+          status: "media",
+          url: listingPreviewUrl(listing),
+          contentType: previewContentType,
+          loaded: false,
+        });
       })
       .catch(() => {
         if (!cancelled) setPreview({ status: "empty" });
@@ -73,7 +84,7 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
     return () => {
       cancelled = true;
     };
-  }, [listing, mediaKind]);
+  }, [listing]);
 
   const markMediaLoaded = () => {
     setPreview((prev) =>
@@ -81,27 +92,33 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
     );
   };
 
+  const markMediaFailed = () => {
+    setPreview({
+      status: "text",
+      text: listing.description.slice(0, 280),
+    });
+  };
+
   const isZip = isZipContentType(listing.contentType);
+  const previewKind =
+    preview.status === "media"
+      ? previewRenderKind(preview.contentType)
+      : "unavailable";
   const showZipBadge =
     isZip &&
     (preview.status === "empty" ||
       preview.status === "text" ||
-      (preview.status === "media" &&
-        !preview.contentType.startsWith("image/") &&
-        !preview.contentType.startsWith("video/") &&
-        !preview.contentType.startsWith("audio/")));
+      previewKind === "unavailable");
 
   const isInteractiveMedia =
     preview.status === "media" &&
-    (preview.contentType.startsWith("video/") ||
-      preview.contentType.startsWith("audio/"));
+    (previewKind === "video" || previewKind === "audio");
 
-  const showMediaLoading =
-    preview.status === "media" && !preview.loaded;
+  const showMediaLoading = preview.status === "media" && !preview.loaded;
 
   return (
     <div
-      className={`forge-card-preview${isInteractiveMedia ? " forge-card-preview--interactive" : ""}${preview.status === "media" && preview.contentType.startsWith("audio/") ? " forge-card-preview--audio" : ""}`}
+      className={`forge-card-preview${isInteractiveMedia ? " forge-card-preview--interactive" : ""}${preview.status === "media" && previewKind === "audio" ? " forge-card-preview--audio" : ""}${preview.status === "media" && previewKind === "pdf" ? " forge-card-preview--pdf" : ""}`}
     >
       {(preview.status === "loading" || showMediaLoading) && (
         <div className="forge-card-preview-placeholder">{msg("loading")}</div>
@@ -113,55 +130,26 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
       {!showZipBadge && preview.status === "text" && (
         <p className="forge-card-preview-text">{preview.text}</p>
       )}
-      {preview.status === "media" && preview.contentType.startsWith("image/") && (
-        <img
-          src={preview.url}
-          alt={listing.title}
-          className="forge-card-preview-media"
-          onLoad={markMediaLoaded}
+      {preview.status === "media" && (
+        <ListingPreviewMedia
+          url={preview.url}
+          contentType={preview.contentType}
+          title={listing.title}
+          previewLabel={previewLabel}
+          audioLabel={msg(audioLabel)}
+          imageClassName="forge-card-preview-media"
+          videoClassName="forge-card-preview-media forge-card-preview-video"
+          audioClassName="forge-card-preview-audio"
+          pdfClassName="forge-card-preview-pdf"
+          onLoaded={markMediaLoaded}
+          onFailed={markMediaFailed}
+          mediaPlayHandlers={mediaPlayHandlers()}
+          showAudioHeader={previewKind === "audio"}
         />
       )}
-      {preview.status === "media" && preview.contentType.startsWith("video/") && (
-        <MediaPreviewFrame kind="video">
-          <video
-            src={preview.url}
-            className="forge-card-preview-media forge-card-preview-video"
-            controls
-            playsInline
-            preload="metadata"
-            aria-label={previewLabel}
-            onLoadedData={markMediaLoaded}
-            onCanPlay={markMediaLoaded}
-            {...mediaPlayHandlers()}
-          />
-        </MediaPreviewFrame>
+      {preview.status === "media" && previewKind === "unavailable" && !showZipBadge && (
+        <div className="forge-card-preview-placeholder">{msg("previewUnavailable")}</div>
       )}
-      {preview.status === "media" && preview.contentType.startsWith("audio/") && (
-        <>
-          <div className="forge-card-audio-header">
-            <span className="media-preview-frame-label">{msg(audioLabel)}</span>
-            <p className="forge-card-audio-title">{listing.title}</p>
-          </div>
-          <audio
-            className="forge-card-preview-audio"
-            src={preview.url}
-            controls
-            playsInline
-            preload="metadata"
-            aria-label={previewLabel}
-            onLoadedData={markMediaLoaded}
-            onCanPlay={markMediaLoaded}
-            {...mediaPlayHandlers()}
-          />
-        </>
-      )}
-      {preview.status === "media" &&
-        !preview.contentType.startsWith("image/") &&
-        !preview.contentType.startsWith("video/") &&
-        !preview.contentType.startsWith("audio/") &&
-        !showZipBadge && (
-          <div className="forge-card-preview-placeholder">{msg("previewUnavailable")}</div>
-        )}
     </div>
   );
 }

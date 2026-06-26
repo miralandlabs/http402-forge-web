@@ -72,6 +72,13 @@ export function FileUploadPreview({
         {file && objectUrl && previewKind === "video" && (
           <video controls src={objectUrl} className="upload-preview-media" />
         )}
+        {file && objectUrl && previewKind === "pdf" && (
+          <iframe
+            src={objectUrl}
+            title={file.name}
+            className="upload-preview-pdf"
+          />
+        )}
         {file && previewKind === "text" && <TextFilePreview file={file} />}
         {file && previewKind === "other" && (
           <div className="upload-file-badge">
@@ -116,10 +123,19 @@ export function FileUploadPreview({
   );
 }
 
-function previewKindFor(file: File): "image" | "audio" | "video" | "text" | "other" {
+function previewKindFor(
+  file: File,
+): "image" | "audio" | "video" | "text" | "pdf" | "other" {
   if (file.type.startsWith("image/")) return "image";
   if (file.type.startsWith("audio/")) return "audio";
   if (file.type.startsWith("video/")) return "video";
+  if (
+    file.type === "application/pdf" ||
+    file.type === "application/x-pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  ) {
+    return "pdf";
+  }
   if (
     file.type.startsWith("text/") ||
     file.name.endsWith(".md") ||

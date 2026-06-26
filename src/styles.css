@@ -235,6 +235,19 @@ main {
   );
 }
 
+.forge-card-preview--pdf {
+  padding: 0;
+  background: var(--fair-bg-secondary);
+}
+
+.forge-card-preview-pdf {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
 .forge-card-preview-media {
   width: 100%;
   height: 100%;
@@ -636,6 +649,14 @@ main {
   border-top-color: var(--fair-primary);
   border-radius: 50%;
   animation: preview-spin 0.7s linear infinite;
+}
+
+.listing-preview-pdf {
+  width: 100%;
+  min-height: 28rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #fff;
 }
 
 @keyframes preview-spin {
@@ -1153,6 +1174,14 @@ a.seller-wallet-chip-addr:hover {
   max-height: 280px;
   object-fit: contain;
   border-radius: 0.5rem;
+}
+
+.upload-preview-pdf {
+  width: 100%;
+  min-height: 14rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #fff;
 }
 
 .upload-preview-audio {
