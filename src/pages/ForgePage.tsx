@@ -76,40 +76,60 @@ export function ForgePage() {
           aria-label={msg("searchPlaceholder")}
           enterKeyHint="search"
         />
-        <div className="browse-filters">
-          {FILTER_CATEGORIES.map((c) => (
-            <button
-              key={c.id || "all"}
-              type="button"
-              className={`control-btn${category === c.id ? " primary" : ""}`}
-              onClick={() => setCategory(c.id)}
+        <div className="browse-toolbar-controls">
+          <div className="browse-toolbar-section browse-toolbar-section--category">
+            <span className="browse-toolbar-label" id="browse-category-label">
+              {msg("browseCategory")}
+            </span>
+            <div
+              className="browse-chip-group"
+              role="group"
+              aria-labelledby="browse-category-label"
             >
-              {msg(c.labelKey)}
-            </button>
-          ))}
-        </div>
-        <div className="browse-sort">
-          <button
-            type="button"
-            className={`control-btn${sort === "trending" ? " primary" : ""}`}
-            onClick={() => setSort("trending")}
-          >
-            {msg("sortTrending")}
-          </button>
-          <button
-            type="button"
-            className={`control-btn${sort === "newest" ? " primary" : ""}`}
-            onClick={() => setSort("newest")}
-          >
-            {msg("sortNewest")}
-          </button>
-          <button
-            type="button"
-            className={`control-btn${sort === "price_asc" ? " primary" : ""}`}
-            onClick={() => setSort("price_asc")}
-          >
-            {msg("sortPrice")}
-          </button>
+              {FILTER_CATEGORIES.map((c) => (
+                <button
+                  key={c.id || "all"}
+                  type="button"
+                  className={`browse-chip${category === c.id ? " is-active" : ""}`}
+                  onClick={() => setCategory(c.id)}
+                >
+                  {msg(c.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="browse-toolbar-section browse-toolbar-section--sort">
+            <span className="browse-toolbar-label" id="browse-sort-label">
+              {msg("browseSort")}
+            </span>
+            <div
+              className="browse-chip-group browse-chip-group--compact"
+              role="group"
+              aria-labelledby="browse-sort-label"
+            >
+              <button
+                type="button"
+                className={`browse-chip${sort === "trending" ? " is-active" : ""}`}
+                onClick={() => setSort("trending")}
+              >
+                {msg("sortTrending")}
+              </button>
+              <button
+                type="button"
+                className={`browse-chip${sort === "newest" ? " is-active" : ""}`}
+                onClick={() => setSort("newest")}
+              >
+                {msg("sortNewest")}
+              </button>
+              <button
+                type="button"
+                className={`browse-chip${sort === "price_asc" ? " is-active" : ""}`}
+                onClick={() => setSort("price_asc")}
+              >
+                {msg("sortPrice")}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
