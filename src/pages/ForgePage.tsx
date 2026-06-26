@@ -10,7 +10,7 @@ import { isSolanaWalletAddress, resolveBrowseSearch } from "../utils/browseSearc
 
 const FILTER_CATEGORIES = [{ id: "", labelKey: "filterAll" as const }, ...LISTING_CATEGORIES];
 
-type SortMode = "trending" | "newest" | "price_asc" | "price_desc";
+type SortMode = "trending" | "newest" | "price_asc" | "price_desc" | "quality";
 
 export function ForgePage() {
   const { msg } = useLocale();
@@ -127,6 +127,13 @@ export function ForgePage() {
                 onClick={() => setSort("price_asc")}
               >
                 {msg("sortPrice")}
+              </button>
+              <button
+                type="button"
+                className={`browse-chip${sort === "quality" ? " is-active" : ""}`}
+                onClick={() => setSort("quality")}
+              >
+                {msg("sortQuality")}
               </button>
             </div>
           </div>

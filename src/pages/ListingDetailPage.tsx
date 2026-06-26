@@ -262,6 +262,13 @@ export function ListingDetailPage() {
         <p className="meta">
           {listing.category} · {formatUsdc(listing.priceMicroUsdc)} USDC ·{" "}
           {listing.deliveryScheme}
+          {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
+            <>
+              {" · "}
+              {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
+              {listing.verifiedFeedbackCount} {msg("verifiedPurchases")})
+            </>
+          )}
         </p>
         <p className="meta seller-detail-meta">
           <SellerWalletChip wallet={listing.sellerWallet} linkToSeller />

@@ -27,6 +27,8 @@ export interface Listing {
   tags: string[];
   license?: string;
   contentHash?: string;
+  qualityScore?: number;
+  verifiedFeedbackCount?: number;
   createdAt: string;
 }
 
@@ -53,6 +55,14 @@ function parseListing(raw: Record<string, unknown>): Listing {
       : [],
     license: (raw.license as string | undefined) ?? undefined,
     contentHash: String(raw.contentHash ?? raw.content_hash ?? "") || undefined,
+    qualityScore:
+      raw.qualityScore != null || raw.quality_score != null
+        ? Number(raw.qualityScore ?? raw.quality_score)
+        : undefined,
+    verifiedFeedbackCount:
+      raw.verifiedFeedbackCount != null || raw.verified_feedback_count != null
+        ? Number(raw.verifiedFeedbackCount ?? raw.verified_feedback_count)
+        : undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
@@ -201,6 +211,9 @@ export async function createListing(form: FormData): Promise<Listing> {
       throw new Error(
         err.error ?? err.message ?? t(getLocale(), "sellerVaultRequired"),
       );
+    }
+    if (res.status === 400 && (err.message ?? err.error ?? "").includes("moderation")) {
+      throw new Error(err.message ?? err.error ?? t(getLocale(), "moderationBlocked"));
     }
     if (err.details?.length) {
       throw new Error(
