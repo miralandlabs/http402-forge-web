@@ -63,6 +63,7 @@ export const en = {
   downloadPaidRetryHint:
     "Payment went through but the file transfer failed. Retry download — you will not be charged again.",
   retryPaidDownload: "Retry download (already paid)",
+  recoverWithWallet: "Recover with wallet (already paid)",
   preview: "Preview",
   viewDetails: "View details",
   previewUnavailable: "Preview unavailable for this file type.",
@@ -223,6 +224,7 @@ export const zh: Record<MessageKey, string> = {
   downloadPaidRetryHint:
     "支付已成功，但文件传输失败。请重试下载 — 不会再次扣款。",
   retryPaidDownload: "重试下载（已付款）",
+  recoverWithWallet: "用钱包恢复下载（已付款）",
   preview: "预览",
   viewDetails: "查看详情",
   previewUnavailable: "此文件类型暂无预览。",

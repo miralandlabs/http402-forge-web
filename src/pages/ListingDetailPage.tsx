@@ -15,6 +15,7 @@ import {
   formatUsdc,
   getCachedDownloadProof,
   PaidDownloadTransferError,
+  redownloadWithWallet,
   retryPaidDownload,
   type Listing,
   type PaymentProgressPhase,
@@ -228,6 +229,43 @@ export function ListingDetailPage() {
     }
   };
 
+  const onRecoverWithWallet = async () => {
+    if (!id) return;
+    setError(null);
+    if (!publicKey) {
+      setVisible(true);
+      return;
+    }
+    if (!signMessage) {
+      setError(msg("walletSignRequired"));
+      return;
+    }
+    setBusy(true);
+    setPaymentPhase(null);
+    try {
+      const blob = await redownloadWithWallet(
+        id,
+        {
+          publicKey: publicKey.toBase58(),
+          signMessage,
+        },
+        setPaymentPhase,
+      );
+      setPaidRetryAvailable(false);
+      setConfirmOpen(false);
+      triggerDownload(blob, listing?.title ?? "download");
+    } catch (e) {
+      if (e instanceof PaidDownloadTransferError) {
+        setError(msg("downloadPaidRetryHint"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setBusy(false);
+      setPaymentPhase(null);
+    }
+  };
+
   const onCancelPayment = () => {
     if (busy) return;
     setConfirmOpen(false);
@@ -409,6 +447,20 @@ export function ListingDetailPage() {
               onClick={() => void onRetryPaidDownload()}
             >
               {busy ? msg("paymentConfirmDownloading") : msg("retryPaidDownload")}
+            </button>
+          )}
+          {(paidRetryAvailable || error) && publicKey && (
+            <button
+              type="button"
+              className="control-btn"
+              disabled={busy}
+              onClick={() => void onRecoverWithWallet()}
+            >
+              {busy && paymentPhase
+                ? paymentPhase === "signing"
+                  ? msg("paymentConfirmSigning")
+                  : msg("paymentConfirmDownloading")
+                : msg("recoverWithWallet")}
             </button>
           )}
           <button

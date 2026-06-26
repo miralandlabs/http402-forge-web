@@ -364,3 +364,77 @@ export async function payAndDownload(
   if (quote.kind === "ready") return quote.blob;
   return downloadWithPayment(listingId, quote.challenge, wallet);
 }
+
+function encodeUtf8Header(value: string): string {
+  return Buffer.from(value, "utf8").toString("base64");
+}
+
+export interface RedownloadChallenge {
+  message: string;
+  expiresAt: string;
+  saleId: string;
+}
+
+export async function fetchRedownloadChallenge(
+  buyerWallet: string,
+  listingId: string,
+): Promise<RedownloadChallenge> {
+  const q = new URLSearchParams({
+    buyer_wallet: buyerWallet,
+    listing_id: listingId,
+  });
+  const res = await fetch(`${API_BASE}/api/v1/buyer/redownload-challenge?${q}`, {
+    cache: "no-store",
+  });
+  if (res.status === 404) {
+    throw new Error("No purchase found for this wallet on this listing.");
+  }
+  if (!res.ok) throw new Error(`redownload-challenge ${res.status}`);
+  const raw = (await res.json()) as Record<string, unknown>;
+  return {
+    message: String(raw.message ?? ""),
+    expiresAt: String(raw.expiresAt ?? raw.expires_at ?? ""),
+    saleId: String(raw.saleId ?? raw.sale_id ?? ""),
+  };
+}
+
+export type WalletMessageSigner = {
+  publicKey: string;
+  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
+};
+
+export async function redownloadWithWallet(
+  listingId: string,
+  wallet: WalletMessageSigner,
+  onProgress?: (phase: PaymentProgressPhase) => void,
+): Promise<Blob> {
+  onProgress?.("signing");
+  const challenge = await fetchRedownloadChallenge(wallet.publicKey, listingId);
+  const challengeMessage = challenge.message.replace(/\r\n/g, "\n");
+  const signature = await wallet.signMessage(
+    new TextEncoder().encode(challengeMessage),
+  );
+
+  onProgress?.("downloading");
+  const url = `${API_BASE}/api/v1/listings/${listingId}/redownload`;
+  const paid = await fetch(url, {
+    headers: {
+      "X-Forge-Buyer-Wallet": wallet.publicKey,
+      "X-Forge-Buyer-Challenge": encodeUtf8Header(challengeMessage),
+      "X-Forge-Buyer-Signature": Buffer.from(signature).toString("base64"),
+    },
+  });
+  if (!paid.ok) {
+    const err = await paid.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string; message?: string }).error ??
+        (err as { message?: string }).message ??
+        `redownload ${paid.status}`,
+    );
+  }
+  try {
+    return await paid.blob();
+  } catch (e) {
+    throw new PaidDownloadTransferError(listingId, e);
+  }
+}
