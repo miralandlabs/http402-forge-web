@@ -257,7 +257,7 @@ export function ListingDetailPage() {
 
   return (
     <>
-      <article className="card" style={{ maxWidth: 720 }}>
+      <article className="card listing-detail-card">
         <h1>{listing.title}</h1>
         <p className="meta">
           {listing.category} · {formatUsdc(listing.priceMicroUsdc)} USDC ·{" "}
