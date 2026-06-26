@@ -16,15 +16,13 @@ export function ListingCard({ listing }: ListingCardProps) {
 
   return (
     <article className="card forge-card">
-      <Link
-        to={`/forge/${listing.id}`}
-        className="forge-card-preview-link"
-        aria-label={`${msg("viewDetails")}: ${listing.title}`}
-      >
-        <ListingCardPreview listing={listing} />
-      </Link>
+      <ListingCardPreview listing={listing} />
       <div className="forge-card-body">
-        <h3>{listing.title}</h3>
+        <h3>
+          <Link to={`/forge/${listing.id}`} className="forge-card-title-link">
+            {listing.title}
+          </Link>
+        </h3>
         <p className="meta">
           {categoryLabel ? msg(categoryLabel) : listing.category}
         </p>

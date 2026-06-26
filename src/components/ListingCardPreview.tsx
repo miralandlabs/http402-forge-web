@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { API_BASE, previewResponseContentType, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { MediaPreviewFrame } from "./MediaPreviewFrame";
 import { ArchivePreviewBadge, isZipContentType } from "./ArchivePreviewBadge";
 import { useLocale } from "../hooks/useLocale";
+import { onCardMediaPause, onCardMediaPlay } from "../utils/mediaPreviewCoordinator";
 
 type PreviewState =
   | { status: "loading" }
@@ -15,11 +16,23 @@ interface ListingCardPreviewProps {
   listing: Listing;
 }
 
+function mediaPlayHandlers() {
+  return {
+    onPlay: (e: SyntheticEvent<HTMLMediaElement>) => {
+      onCardMediaPlay(e.currentTarget);
+    },
+    onPause: (e: SyntheticEvent<HTMLMediaElement>) => {
+      onCardMediaPause(e.currentTarget);
+    },
+  };
+}
+
 export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
   const { msg } = useLocale();
   const [preview, setPreview] = useState<PreviewState>({ status: "loading" });
   const audioLabel =
     LISTING_CATEGORIES.find((c) => c.id === "audio")?.labelKey ?? "categoryAudio";
+  const previewLabel = `${msg("preview")}: ${listing.title}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -72,8 +85,15 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
         !preview.contentType.startsWith("video/") &&
         !preview.contentType.startsWith("audio/")));
 
+  const isInteractiveMedia =
+    preview.status === "media" &&
+    (preview.contentType.startsWith("video/") ||
+      preview.contentType.startsWith("audio/"));
+
   return (
-    <div className="forge-card-preview" aria-hidden>
+    <div
+      className={`forge-card-preview${isInteractiveMedia ? " forge-card-preview--interactive" : ""}${preview.status === "media" && preview.contentType.startsWith("audio/") ? " forge-card-preview--audio" : ""}`}
+    >
       {preview.status === "loading" && (
         <div className="forge-card-preview-placeholder">{msg("loading")}</div>
       )}
@@ -85,21 +105,41 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
         <p className="forge-card-preview-text">{preview.text}</p>
       )}
       {preview.status === "media" && preview.contentType.startsWith("image/") && (
-        <img src={preview.url} alt="" className="forge-card-preview-media" />
+        <img
+          src={preview.url}
+          alt={listing.title}
+          className="forge-card-preview-media"
+        />
       )}
       {preview.status === "media" && preview.contentType.startsWith("video/") && (
         <MediaPreviewFrame kind="video">
           <video
             src={preview.url}
-            className="forge-card-preview-media"
-            muted
+            className="forge-card-preview-media forge-card-preview-video"
+            controls
             playsInline
             preload="metadata"
+            aria-label={previewLabel}
+            {...mediaPlayHandlers()}
           />
         </MediaPreviewFrame>
       )}
       {preview.status === "media" && preview.contentType.startsWith("audio/") && (
-        <MediaPreviewFrame kind="audio" label={msg(audioLabel)} />
+        <>
+          <div className="forge-card-audio-header">
+            <span className="media-preview-frame-label">{msg(audioLabel)}</span>
+            <p className="forge-card-audio-title">{listing.title}</p>
+          </div>
+          <audio
+            className="forge-card-preview-audio"
+            src={preview.url}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={previewLabel}
+            {...mediaPlayHandlers()}
+          />
+        </>
       )}
       {preview.status === "media" &&
         !preview.contentType.startsWith("image/") &&

@@ -198,6 +198,16 @@ main {
   outline-offset: -2px;
 }
 
+.forge-card-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.forge-card-title-link:hover {
+  color: var(--fair-primary);
+  text-decoration: underline;
+}
+
 .forge-card-preview {
   aspect-ratio: 4 / 3;
   background: var(--fair-accent-surface);
@@ -206,6 +216,23 @@ main {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.forge-card-preview--interactive {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.forge-card-preview--audio {
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0.65rem 0.75rem 0.75rem;
+  box-sizing: border-box;
+  background: linear-gradient(
+    145deg,
+    var(--fair-accent-surface) 0%,
+    var(--fair-bg-secondary) 100%
+  );
 }
 
 .forge-card-preview-media {
@@ -225,18 +252,11 @@ main {
   overflow: hidden;
 }
 
-.media-preview-frame--audio {
-  background: linear-gradient(
-    145deg,
-    var(--fair-accent-surface) 0%,
-    var(--fair-bg-secondary) 100%
-  );
+.media-preview-frame--video {
+  background: #000;
 }
 
 .media-preview-frame-label {
-  position: absolute;
-  top: 0.65rem;
-  left: 0.75rem;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -244,23 +264,36 @@ main {
   color: var(--fair-text-muted);
 }
 
-.media-play-badge {
-  position: absolute;
-  inset: 0;
+.forge-card-audio-header {
+  flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  pointer-events: none;
+  min-height: 0;
+  width: 100%;
+  padding: 0.15rem 0.1rem 0.5rem;
 }
 
-.media-play-badge svg {
-  width: 3rem;
-  height: 3rem;
+.forge-card-audio-title {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--fair-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.forge-card-preview-video {
+  background: #000;
 }
 
 .forge-card-preview-audio {
-  width: calc(100% - 1.5rem);
-  max-height: 3rem;
+  width: 100%;
+  height: 2.75rem;
+  flex-shrink: 0;
 }
 
 .forge-card-preview-text {
