@@ -283,7 +283,7 @@ export function ListingDetailPage() {
               )}
             </dl>
           )}
-        {(previewLoad.status === "loading" || mediaLoading) && (
+        {previewLoad.status === "loading" && (
           <div className="preview-box preview-box--loading">
             <strong>{msg("preview")}</strong>
             <div className="preview-loading">
@@ -292,9 +292,17 @@ export function ListingDetailPage() {
             </div>
           </div>
         )}
-        {previewLoad.status === "ready" && !mediaLoading && (
-          <div className="preview-box">
+        {previewLoad.status === "ready" && (
+          <div
+            className={`preview-box${mediaLoading ? " preview-box--loading" : ""}`}
+          >
             <strong>{msg("preview")}</strong>
+            {mediaLoading && (
+              <div className="preview-loading">
+                <span className="preview-spinner" aria-hidden="true" />
+                <span>{msg("previewLoading")}</span>
+              </div>
+            )}
             {previewLoad.preview.kind === "text" ? (
               <pre style={{ margin: "0.5rem 0 0", whiteSpace: "pre-wrap" }}>
                 {previewLoad.preview.text}
@@ -309,6 +317,7 @@ export function ListingDetailPage() {
             ) : previewLoad.preview.contentType.startsWith("audio/") ? (
               <audio
                 controls
+                preload="metadata"
                 src={previewLoad.preview.url}
                 className="listing-preview-media"
                 onLoadedData={markMediaLoaded}
@@ -317,6 +326,8 @@ export function ListingDetailPage() {
             ) : previewLoad.preview.contentType.startsWith("video/") ? (
               <video
                 controls
+                playsInline
+                preload="metadata"
                 src={previewLoad.preview.url}
                 className="listing-preview-media"
                 onLoadedData={markMediaLoaded}
