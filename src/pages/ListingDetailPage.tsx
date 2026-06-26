@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PaymentConfirmModal } from "../components/PaymentConfirmModal";
@@ -9,6 +9,7 @@ import {
   fetchDownloadQuote,
   fetchListing,
   formatUsdc,
+  previewResponseContentType,
   type Listing,
 } from "../services/api";
 import {
@@ -54,14 +55,17 @@ export function ListingDetailPage() {
   }, [id, msg]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !listing) return;
     let cancelled = false;
     let objectUrl: string | null = null;
 
     fetch(`${API_BASE}/api/v1/listings/${id}/preview`)
       .then(async (r) => {
         if (!r.ok) return;
-        const contentType = r.headers.get("content-type") ?? "";
+        const contentType = previewResponseContentType(
+          r.headers.get("content-type"),
+          listing.contentType,
+        );
         if (contentType.startsWith("text/") || contentType.includes("json")) {
           const text = await r.text();
           if (!cancelled) setPreview({ kind: "text", text });
@@ -81,7 +85,7 @@ export function ListingDetailPage() {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [id]);
+  }, [id, listing]);
 
   const onBuyClick = async () => {
     if (!id) return;
@@ -142,6 +146,13 @@ export function ListingDetailPage() {
         <p className="meta">
           {listing.category} · {formatUsdc(listing.priceMicroUsdc)} USDC ·{" "}
           {listing.deliveryScheme}
+        </p>
+        <p className="meta">
+          <Link
+            to={`/forge?seller_wallet=${encodeURIComponent(listing.sellerWallet)}`}
+          >
+            {msg("moreFromSeller")}
+          </Link>
         </p>
         <p>{listing.description}</p>
         {preview && (

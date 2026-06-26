@@ -53,11 +53,13 @@ export interface ListResponse {
 export async function fetchListings(params: {
   category?: string;
   q?: string;
+  sellerWallet?: string;
   sort?: string;
 }): Promise<ListResponse> {
   const q = new URLSearchParams();
   if (params.category) q.set("category", params.category);
   if (params.q) q.set("q", params.q);
+  if (params.sellerWallet) q.set("seller_wallet", params.sellerWallet);
   if (params.sort) q.set("sort", params.sort);
   const res = await fetch(`${API_BASE}/api/v1/listings?${q}`);
   if (!res.ok) throw new Error(`listings ${res.status}`);
@@ -77,6 +79,31 @@ export async function fetchListing(id: string): Promise<Listing> {
 export function formatUsdc(micro: number): string {
   if (!Number.isFinite(micro)) return "—";
   return (micro / 1_000_000).toFixed(micro % 1_000_000 === 0 ? 2 : 4);
+}
+
+/** R2 often omits Content-Type on GET; fall back to listing asset type for previews. */
+export function previewResponseContentType(
+  headerValue: string | null,
+  listingContentType: string,
+): string {
+  const header = (headerValue ?? "").split(";")[0]?.trim() ?? "";
+  if (
+    header.startsWith("image/") ||
+    header.startsWith("video/") ||
+    header.startsWith("audio/")
+  ) {
+    return header;
+  }
+  const listing = listingContentType.split(";")[0]?.trim() ?? "";
+  if (
+    (header === "" || header === "application/octet-stream") &&
+    (listing.startsWith("image/") ||
+      listing.startsWith("video/") ||
+      listing.startsWith("audio/"))
+  ) {
+    return listing;
+  }
+  return header;
 }
 
 export interface SellerChallenge {

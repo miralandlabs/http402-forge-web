@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchListings, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { ListingCard } from "../components/ListingCard";
@@ -8,6 +9,8 @@ const FILTER_CATEGORIES = [{ id: "", labelKey: "filterAll" as const }, ...LISTIN
 
 export function ForgePage() {
   const { msg } = useLocale();
+  const [searchParams] = useSearchParams();
+  const sellerWallet = searchParams.get("seller_wallet")?.trim() || undefined;
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -25,6 +28,7 @@ export function ForgePage() {
     fetchListings({
       category: category || undefined,
       q: debouncedSearch || undefined,
+      sellerWallet,
     })
       .then((r) => {
         setItems(r.items);
@@ -32,10 +36,12 @@ export function ForgePage() {
       })
       .catch(() => setError(msg("errorLoad")))
       .finally(() => setLoading(false));
-  }, [category, debouncedSearch, msg]);
+  }, [category, debouncedSearch, sellerWallet, msg]);
 
   const emptyMessage =
-    debouncedSearch.length > 0 ? msg("noSearchResults") : msg("noListings");
+    debouncedSearch.length > 0 || sellerWallet
+      ? msg("noSearchResults")
+      : msg("noListings");
 
   return (
     <>

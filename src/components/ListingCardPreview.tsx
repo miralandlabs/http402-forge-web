@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE, type Listing } from "../services/api";
+import { API_BASE, previewResponseContentType, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { MediaPreviewFrame } from "./MediaPreviewFrame";
 import { ArchivePreviewBadge, isZipContentType } from "./ArchivePreviewBadge";
@@ -32,7 +32,10 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
           if (!cancelled) setPreview({ status: "empty" });
           return;
         }
-        const contentType = res.headers.get("content-type") ?? "";
+        const contentType = previewResponseContentType(
+          res.headers.get("content-type"),
+          listing.contentType,
+        );
         if (contentType.startsWith("text/") || contentType.includes("json")) {
           const text = await res.text();
           if (!cancelled) {
@@ -57,7 +60,7 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [listing.id, listing.description]);
+  }, [listing.id, listing.description, listing.contentType]);
 
   const isZip = isZipContentType(listing.contentType);
   const showZipBadge =
