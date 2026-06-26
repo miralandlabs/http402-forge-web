@@ -108,6 +108,10 @@ export const en = {
   topPayers: "Top payers",
   hottest: "Hottest listings",
   footer: "Payments settle to creator vaults via pr402 — Forge is not custodian.",
+  removeListing: "Remove listing",
+  delistConfirm:
+    "Remove this listing from the marketplace? Buyers who already paid can still re-download.",
+  delistSuccess: "Listing removed.",
 } as const;
 
 export type Messages = typeof en;
@@ -222,6 +226,9 @@ export const zh: Record<MessageKey, string> = {
   topPayers: "消费最高",
   hottest: "最热商品",
   footer: "支付通过 pr402 结算至创作者金库 — Forge 不托管资金。",
+  removeListing: "下架商品",
+  delistConfirm: "从市场下架此商品？已付款的买家仍可重新下载。",
+  delistSuccess: "商品已下架。",
 };
 
 export function t(locale: "en" | "zh", key: MessageKey): string {

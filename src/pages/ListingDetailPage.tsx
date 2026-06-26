@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Buffer } from "buffer";
 import { PaymentConfirmModal } from "../components/PaymentConfirmModal";
 import {
   API_BASE,
+  delistListing,
   downloadWithPayment,
+  fetchDelistChallenge,
   fetchDownloadQuote,
   fetchListing,
   formatUsdc,
@@ -34,8 +37,9 @@ function triggerDownload(blob: Blob, filename: string) {
 
 export function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { msg } = useLocale();
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signMessage, signTransaction } = useWallet();
   const { setVisible } = useWalletModal();
   const [listing, setListing] = useState<Listing | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -137,6 +141,43 @@ export function ListingDetailPage() {
     setConfirmDetails(null);
   };
 
+  const isOwner =
+    !!publicKey && listing?.sellerWallet === publicKey.toBase58();
+
+  const onDelistClick = async () => {
+    if (!id || !listing || !isOwner) return;
+    if (!window.confirm(msg("delistConfirm"))) return;
+    setError(null);
+    if (!publicKey) {
+      setVisible(true);
+      return;
+    }
+    if (!signMessage) {
+      setError(msg("walletSignRequired"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const wallet = publicKey.toBase58();
+      const challenge = await fetchDelistChallenge(wallet, id);
+      const challengeMessage = challenge.message.replace(/\r\n/g, "\n");
+      const signature = await signMessage(
+        new TextEncoder().encode(challengeMessage),
+      );
+      await delistListing(
+        id,
+        wallet,
+        challengeMessage,
+        Buffer.from(signature).toString("base64"),
+      );
+      navigate("/forge", { state: { toast: msg("delistSuccess") } });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (!listing) return <p>{msg("loading")}</p>;
 
   return (
@@ -186,6 +227,16 @@ export function ListingDetailPage() {
           >
             {busy && !confirmOpen ? msg("loading") : msg("buyDownload")}
           </button>
+          {isOwner && (
+            <button
+              type="button"
+              className="control-btn"
+              disabled={busy}
+              onClick={onDelistClick}
+            >
+              {busy ? msg("loading") : msg("removeListing")}
+            </button>
+          )}
         </div>
         {error && <p className="error">{error}</p>}
       </article>

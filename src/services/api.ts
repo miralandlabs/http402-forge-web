@@ -126,6 +126,55 @@ export async function fetchSellerChallenge(
   };
 }
 
+export async function fetchDelistChallenge(
+  sellerWallet: string,
+  listingId: string,
+): Promise<SellerChallenge> {
+  const q = new URLSearchParams({
+    seller_wallet: sellerWallet,
+    listing_id: listingId,
+  });
+  const res = await fetch(`${API_BASE}/api/v1/seller/delist-challenge?${q}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string }).error ?? `delist-challenge ${res.status}`,
+    );
+  }
+  const raw = (await res.json()) as Record<string, unknown>;
+  return {
+    message: String(raw.message ?? ""),
+    expiresAt: String(raw.expiresAt ?? raw.expires_at ?? ""),
+  };
+}
+
+export async function delistListing(
+  listingId: string,
+  sellerWallet: string,
+  sellerChallenge: string,
+  sellerSignature: string,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/v1/listings/${listingId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      seller_wallet: sellerWallet,
+      seller_challenge: sellerChallenge,
+      seller_signature: sellerSignature,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string; message?: string }).error ??
+        (err as { message?: string }).message ??
+        `delist ${res.status}`,
+    );
+  }
+}
+
 export async function createListing(form: FormData): Promise<Listing> {
   const res = await fetch(`${API_BASE}/api/v1/listings`, {
     method: "POST",
