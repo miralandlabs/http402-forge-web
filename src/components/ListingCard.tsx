@@ -30,8 +30,16 @@ export function ListingCard({ listing, hideSellerWallet = false }: ListingCardPr
           {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
             <>
               {" · "}
-              {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
-              {listing.verifiedFeedbackCount})
+              <span className="quality-score" title={msg("qualityTooltip")}>
+                {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
+                {listing.verifiedFeedbackCount})
+              </span>{" "}
+              <Link
+                to={`/forge/${listing.id}#quality-trust`}
+                className="quality-learn-more"
+              >
+                {msg("qualityLearnMore")}
+              </Link>
             </>
           )}
         </p>

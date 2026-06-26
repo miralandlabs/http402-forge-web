@@ -265,11 +265,16 @@ export function ListingDetailPage() {
           {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
             <>
               {" · "}
-              {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
-              {listing.verifiedFeedbackCount} {msg("verifiedPurchases")})
+              <span id="quality-trust" className="quality-score" title={msg("qualityTooltip")}>
+                {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
+                {listing.verifiedFeedbackCount} {msg("verifiedPurchases")})
+              </span>
             </>
           )}
         </p>
+        {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
+          <p className="meta quality-explainer">{msg("qualityExplainer")}</p>
+        )}
         <p className="meta seller-detail-meta">
           <SellerWalletChip wallet={listing.sellerWallet} linkToSeller />
           <span className="seller-detail-meta-sep" aria-hidden="true">

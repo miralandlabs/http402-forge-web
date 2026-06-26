@@ -134,6 +134,11 @@ export const en = {
   sortPrice: "Price",
   sortQuality: "Quality",
   qualityFromPurchases: "Quality from verified purchases",
+  qualityTooltip:
+    "Average score from buyers who paid and verified the download. Not open star ratings.",
+  qualityLearnMore: "Learn more",
+  qualityExplainer:
+    "This score rolls up purchase-linked feedback (e.g. content matched listing, hash verified). Only buyers who completed a purchase can contribute.",
   verifiedPurchases: "verified",
   moderationBlocked: "Listing blocked by content moderation.",
   sellerListings: "listings",
@@ -284,6 +289,10 @@ export const zh: Record<MessageKey, string> = {
   sortPrice: "价格",
   sortQuality: "质量",
   qualityFromPurchases: "已验证购买质量",
+  qualityTooltip: "来自已付款并验证下载的买家反馈平均分，非公开星级评价。",
+  qualityLearnMore: "了解更多",
+  qualityExplainer:
+    "该分数汇总与购买绑定的反馈（如内容与描述一致、哈希校验通过）。仅完成购买的买家可贡献。",
   verifiedPurchases: "条验证",
   moderationBlocked: "内容审核未通过，无法上架。",
   sellerListings: "件商品",
