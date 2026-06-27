@@ -1146,6 +1146,15 @@ a.seller-wallet-chip-addr:hover {
   font-size: 0.85rem;
 }
 
+.forge-leaderboards {
+  margin: 0 0 1.25rem;
+}
+
+.forge-leaderboards h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
 .sell-header h1 {
   margin: 0 0 0.35rem;
 }
