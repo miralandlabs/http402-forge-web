@@ -23,6 +23,7 @@ export interface Listing {
   agentFriendly: boolean;
   deliveryScheme: string;
   previewUrl: string;
+  previewPdfUrl?: string;
   previewContentType: string;
   tags: string[];
   license?: string;
@@ -47,6 +48,8 @@ function parseListing(raw: Record<string, unknown>): Listing {
     agentFriendly: Boolean(raw.agentFriendly ?? raw.agent_friendly),
     deliveryScheme: String(raw.deliveryScheme ?? raw.delivery_scheme ?? ""),
     previewUrl: String(raw.previewUrl ?? raw.preview_url ?? ""),
+    previewPdfUrl:
+      String(raw.previewPdfUrl ?? raw.preview_pdf_url ?? "").trim() || undefined,
     previewContentType: String(
       raw.previewContentType ?? raw.preview_content_type ?? "",
     ),

@@ -29,6 +29,7 @@ import { useLocale } from "../hooks/useLocale";
 import { ListingPreviewMedia } from "../components/ListingPreviewMedia";
 import {
   fetchTextPreview,
+  listingPreviewPdfUrl,
   listingPreviewUrl,
   previewRenderKind,
   resolvePreviewContentType,
@@ -95,6 +96,19 @@ export function ListingDetailPage() {
     resolvePreviewContentType(listing)
       .then((previewContentType) => {
         if (cancelled) return;
+        const pdfSampleUrl = listingPreviewPdfUrl(listing);
+        if (pdfSampleUrl) {
+          setPreviewLoad({
+            status: "ready",
+            preview: {
+              kind: "media",
+              url: pdfSampleUrl,
+              contentType: "application/pdf",
+              loaded: true,
+            },
+          });
+          return;
+        }
         const kind = previewRenderKind(previewContentType);
         if (kind === "text") {
           fetchTextPreview(listing)
@@ -144,6 +158,7 @@ export function ListingDetailPage() {
   const markMediaLoaded = () => {
     setPreviewLoad((prev) => {
       if (prev.status !== "ready" || prev.preview.kind !== "media") return prev;
+      if (prev.preview.loaded) return prev;
       return {
         status: "ready",
         preview: { ...prev.preview, loaded: true },
@@ -334,7 +349,8 @@ export function ListingDetailPage() {
   const mediaLoading =
     previewLoad.status === "ready" &&
     previewLoad.preview.kind === "media" &&
-    !previewLoad.preview.loaded;
+    !previewLoad.preview.loaded &&
+    previewRenderKind(previewLoad.preview.contentType) !== "pdf";
 
   return (
     <>
