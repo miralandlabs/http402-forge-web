@@ -4,6 +4,7 @@ import { fetchListings, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { ListingCard } from "../components/ListingCard";
 import { LiveSalesTicker } from "../components/LiveSalesTicker";
+import { AgentToolingPanel } from "../components/AgentToolingPanel";
 import { SellerWalletChip } from "../components/SellerWalletChip";
 import { useLocale } from "../hooks/useLocale";
 import { isSolanaWalletAddress, resolveBrowseSearch } from "../utils/browseSearch";
@@ -63,6 +64,8 @@ export function ForgePage() {
   return (
     <>
       <h1>{msg("browseTitle")}</h1>
+
+      <AgentToolingPanel />
 
       <LiveSalesTicker sellerFilter={sellerWallet} />
 

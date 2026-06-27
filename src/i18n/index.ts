@@ -191,6 +191,13 @@ export const en = {
   agentTags: "Tags",
   agentLicense: "License",
   agentContentHash: "Content hash (SHA-256)",
+  agentToolingTitle: "Agents — npm tooling",
+  agentToolingLead:
+    "Browse and buy via HTTP API or install published packages. Payment rail: @pr402/buyer-typescript (via @http402/forge-client).",
+  agentToolingPaymentNote: "payment rail (via forge-client)",
+  agentToolingMcpSummary: "MCP config (Cursor / Claude Desktop)",
+  agentToolingDocsLink: "Forge Agent API",
+  agentToolingPortalManifest: "Portal manifest",
 } as const;
 
 export type Messages = typeof en;
@@ -386,6 +393,13 @@ export const zh: Record<MessageKey, string> = {
   agentTags: "标签",
   agentLicense: "许可",
   agentContentHash: "内容哈希 (SHA-256)",
+  agentToolingTitle: "Agent — npm 工具",
+  agentToolingLead:
+    "通过 HTTP API 浏览购买，或安装已发布的 npm 包。支付层：@pr402/buyer-typescript（经 @http402/forge-client）。",
+  agentToolingPaymentNote: "支付层（经 forge-client）",
+  agentToolingMcpSummary: "MCP 配置（Cursor / Claude Desktop）",
+  agentToolingDocsLink: "Forge Agent API",
+  agentToolingPortalManifest: "门户 manifest",
 };
 
 export function t(locale: "en" | "zh", key: MessageKey): string {
