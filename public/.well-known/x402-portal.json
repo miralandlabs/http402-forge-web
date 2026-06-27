@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "0.1.0",
+  "audience": "agent",
+  "description": "http402.trade connection center — machine-readable channel router. Do not scrape HTML; follow channel apiBaseUrl and x402ResourcesUrl.",
+  "environments": {
+    "production": {
+      "origin": "https://http402.trade",
+      "forgeApi": "https://forge.http402.trade"
+    },
+    "preview": {
+      "origin": "https://preview.http402.trade",
+      "forgeApi": "https://preview.forge.http402.trade"
+    }
+  },
+  "doors": [
+    {
+      "id": "sovereign",
+      "title": "Sovereign Individual",
+      "path": "/sovereign",
+      "description": "Creators, collectors, and agents — markets, mint, tools, and play."
+    },
+    {
+      "id": "corporate",
+      "title": "Corporate Business",
+      "path": "/corporate",
+      "status": "coming_soon",
+      "description": "Industry solutions and enterprise integrations."
+    }
+  ],
+  "channels": [
+    {
+      "id": "digital-bazaar",
+      "door": "sovereign",
+      "title": "Digital Bazaar",
+      "kind": "forge_marketplace",
+      "webPath": "/forge",
+      "apiBaseUrl": "{forgeApi}",
+      "openApiUrl": "{forgeApi}/openapi.yaml",
+      "x402ResourcesUrl": "{forgeApi}/.well-known/x402-resources.json",
+      "catalogUrl": "{forgeApi}/api/v1/listings",
+      "purchaseUrlTemplate": "{forgeApi}/api/v1/listings/{id}/download",
+      "agentFilter": "?agent_friendly=true",
+      "tags": ["forge", "digital-goods", "download", "exact"],
+      "agentTooling": {
+        "forgeSdk": {
+          "npm": "@http402/forge-client",
+          "url": "https://www.npmjs.com/package/@http402/forge-client",
+          "install": "npm install @http402/forge-client"
+        },
+        "cli": {
+          "npm": "@http402/forge-cli",
+          "bin": "forge",
+          "url": "https://www.npmjs.com/package/@http402/forge-cli",
+          "install": "npm install -g @http402/forge-cli",
+          "run": "npx @http402/forge-cli list --pretty"
+        },
+        "mcp": {
+          "npm": "@http402/forge-mcp",
+          "bin": "forge-mcp",
+          "url": "https://www.npmjs.com/package/@http402/forge-mcp",
+          "run": "npx -y @http402/forge-mcp",
+          "configExample": "https://github.com/miraland-labs/x402-buyer-starter/blob/main/examples/mcp/forge-cursor-mcp.json"
+        },
+        "agentApiUrl": "https://github.com/miralandlabs/http402-forge-api/blob/main/docs/AGENT_API.md"
+      }
+    },
+    {
+      "id": "token-gallery",
+      "door": "sovereign",
+      "title": "Token Gallery",
+      "kind": "external_storefront",
+      "url": "https://spl-token.hashspace.me/",
+      "scheme": "sla-escrow",
+      "tags": ["spl", "escrow", "tokens"]
+    },
+    {
+      "id": "credit-foundry",
+      "door": "sovereign",
+      "title": "Credit Foundry",
+      "kind": "external_web",
+      "url": "https://fair.hashspace.me/current-event/registration",
+      "tags": ["fair", "credit"]
+    },
+    {
+      "id": "mintforge",
+      "door": "sovereign",
+      "title": "MintForge",
+      "kind": "coming_soon",
+      "tags": ["mint", "nft"]
+    },
+    {
+      "id": "rwa",
+      "door": "sovereign",
+      "title": "RWA",
+      "kind": "coming_soon",
+      "tags": ["rwa", "escrow"]
+    },
+    {
+      "id": "tools",
+      "door": "sovereign",
+      "title": "Tools",
+      "kind": "tool_group",
+      "webPath": "/sovereign/tools",
+      "tools": [
+        {
+          "id": "solrisk",
+          "title": "SolRisk",
+          "url": "https://solrisk.signer-payer.me/",
+          "x402ResourcesUrl": "https://solrisk.signer-payer.me/.well-known/x402-resources.json",
+          "scheme": "exact",
+          "tags": ["wallet-risk", "security"]
+        },
+        {
+          "id": "spl-token-balance",
+          "title": "SPL Token Balance",
+          "url": "https://spl-token.signer-payer.me/",
+          "scheme": "exact",
+          "tags": ["spl", "balance"]
+        },
+        {
+          "id": "promptlean",
+          "title": "PromptLean",
+          "url": "https://promptlean.signer-payer.me/",
+          "scheme": "exact",
+          "tags": ["prompt", "optimization"]
+        }
+      ]
+    },
+    {
+      "id": "for-fun",
+      "door": "sovereign",
+      "title": "For Fun",
+      "kind": "external_web",
+      "url": "https://aethervane.hashspace.me/",
+      "tags": ["experimental"]
+    }
+  ]
+}

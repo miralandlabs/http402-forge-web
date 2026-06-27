@@ -1089,6 +1089,72 @@ a.seller-wallet-chip-addr:hover {
   }
 }
 
+.agent-tooling {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--fair-border);
+  border-radius: 10px;
+  background: var(--fair-bg-secondary);
+}
+
+.agent-tooling h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.agent-tooling-lead {
+  margin: 0 0 0.75rem;
+  color: var(--fair-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.agent-tooling-packages {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.agent-tooling-packages code {
+  display: block;
+  margin-top: 0.2rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: var(--fair-bg);
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+
+.agent-tooling-mcp summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--fair-text-secondary);
+}
+
+.agent-tooling-mcp pre {
+  margin: 0.5rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: var(--fair-bg);
+  overflow-x: auto;
+  font-size: 0.75rem;
+}
+
+.agent-tooling-docs {
+  margin: 0.65rem 0 0;
+  font-size: 0.85rem;
+}
+
+.forge-leaderboards {
+  margin: 0 0 1.25rem;
+}
+
+.forge-leaderboards h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
 .sell-header h1 {
   margin: 0 0 0.35rem;
 }
@@ -1434,4 +1500,182 @@ a.seller-wallet-chip-addr:hover {
 
 .agent-meta dd {
   margin: 0;
+}
+
+.portal-hero h1 {
+  font-size: 1.85rem;
+}
+
+.portal-doors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.portal-door-card {
+  display: block;
+  padding: 1.5rem;
+  border: 1px solid var(--fair-border);
+  border-radius: var(--fair-radius);
+  background: var(--fair-bg-secondary);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-door-card:hover {
+  border-color: var(--fair-primary);
+  box-shadow: 0 0 0 1px var(--fair-primary);
+}
+
+.portal-door-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--fair-primary);
+}
+
+.portal-door-card p {
+  margin: 0;
+  color: var(--fair-text-secondary);
+  line-height: 1.55;
+}
+
+.portal-back {
+  margin: 0 0 1rem;
+}
+
+.portal-back a {
+  color: var(--fair-text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.portal-back a:hover {
+  color: var(--fair-primary);
+}
+
+.portal-channel-grid {
+  margin-top: 0.5rem;
+}
+
+.portal-channel-card {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--fair-border);
+  border-radius: var(--fair-radius);
+  background: var(--fair-bg-secondary);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.portal-channel-card:hover {
+  border-color: var(--fair-primary);
+}
+
+.portal-channel-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.portal-channel-card p {
+  margin: 0;
+  color: var(--fair-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.portal-channel-card--disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.portal-channel-card--disabled:hover {
+  border-color: var(--fair-border);
+}
+
+.badge-coming-soon {
+  display: inline-block;
+  margin-bottom: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fair-text-secondary);
+  background: var(--fair-control-bg);
+  border: 1px solid var(--fair-control-border);
+}
+
+.badge-coming-soon--inline {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+/* Floating community buttons (mirrors pr402 ipay.sh index.html) */
+.floating-community {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+  right: max(1.5rem, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 10050;
+  pointer-events: none;
+}
+
+.floating-community > * {
+  pointer-events: auto;
+}
+
+.floating-community-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  background-color: var(--fair-bg-secondary);
+  color: var(--fair-text-muted);
+  border: 1px solid var(--fair-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.floating-community-button:hover {
+  transform: translateY(-2px);
+  background-color: var(--fair-accent-surface);
+  color: var(--fair-primary);
+  border-color: var(--fair-border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 768px) {
+  .floating-community {
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    right: max(1rem, env(safe-area-inset-right, 0px));
+  }
+
+  .floating-community-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-community-button {
+    transition: none;
+  }
+
+  .floating-community-button:hover {
+    transform: none;
+  }
 }

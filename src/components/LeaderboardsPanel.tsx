@@ -45,7 +45,7 @@ export function LeaderboardsPanel() {
   if (!data) return null;
 
   return (
-    <section style={{ marginTop: "2rem" }}>
+    <section className="forge-leaderboards">
       <h2>{msg("leaderboards")}</h2>
       <div className="leaderboard">
         <div className="card">

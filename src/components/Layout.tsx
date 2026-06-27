@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useLocale } from "../hooks/useLocale";
 import { getTheme, subscribeTheme, themeToggleIcon, toggleTheme } from "../services/theme";
 import { WalletConnectButton } from "./WalletConnectButton";
+import { FloatingCommunity } from "./FloatingCommunity";
 import { useEffect, useState } from "react";
 
 interface LayoutProps {
@@ -23,11 +24,11 @@ export function Layout({ children }: LayoutProps) {
     <div className="layout">
       <header className="site-header">
         <a className="brand" href="/">
-          <span>402</span>.trade Forge
+          <span>402</span>.trade
         </a>
         <nav className="nav">
           <NavLink to="/" end>
-            {msg("navHome")}
+            {msg("navHub")}
           </NavLink>
           <NavLink to="/forge">{msg("navBrowse")}</NavLink>
           <NavLink to="/sell">{msg("navSell")}</NavLink>
@@ -44,6 +45,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
       <main>{children}</main>
       <footer className="site-footer">{msg("footer")}</footer>
+      <FloatingCommunity />
     </div>
   );
 }
