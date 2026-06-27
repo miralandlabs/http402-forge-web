@@ -1435,3 +1435,115 @@ a.seller-wallet-chip-addr:hover {
 .agent-meta dd {
   margin: 0;
 }
+
+.portal-hero h1 {
+  font-size: 1.85rem;
+}
+
+.portal-doors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.portal-door-card {
+  display: block;
+  padding: 1.5rem;
+  border: 1px solid var(--fair-border);
+  border-radius: var(--fair-radius);
+  background: var(--fair-bg-secondary);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-door-card:hover {
+  border-color: var(--fair-primary);
+  box-shadow: 0 0 0 1px var(--fair-primary);
+}
+
+.portal-door-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--fair-primary);
+}
+
+.portal-door-card p {
+  margin: 0;
+  color: var(--fair-text-secondary);
+  line-height: 1.55;
+}
+
+.portal-back {
+  margin: 0 0 1rem;
+}
+
+.portal-back a {
+  color: var(--fair-text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.portal-back a:hover {
+  color: var(--fair-primary);
+}
+
+.portal-channel-grid {
+  margin-top: 0.5rem;
+}
+
+.portal-channel-card {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--fair-border);
+  border-radius: var(--fair-radius);
+  background: var(--fair-bg-secondary);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.portal-channel-card:hover {
+  border-color: var(--fair-primary);
+}
+
+.portal-channel-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.portal-channel-card p {
+  margin: 0;
+  color: var(--fair-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.portal-channel-card--disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.portal-channel-card--disabled:hover {
+  border-color: var(--fair-border);
+}
+
+.badge-coming-soon {
+  display: inline-block;
+  margin-bottom: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fair-text-secondary);
+  background: var(--fair-control-bg);
+  border: 1px solid var(--fair-control-border);
+}
+
+.badge-coming-soon--inline {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
