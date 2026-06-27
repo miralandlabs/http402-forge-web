@@ -216,7 +216,6 @@ main {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  position: relative;
 }
 
 .forge-card-preview--interactive {
@@ -330,16 +329,6 @@ main {
   color: var(--fair-text-muted);
   padding: 1rem;
   text-align: center;
-}
-
-.forge-card-preview-placeholder--overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--fair-accent-surface);
 }
 
 .forge-card-preview-archive {

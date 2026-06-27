@@ -15,7 +15,7 @@ import type { Listing } from "../services/api";
 type PreviewState =
   | { status: "loading" }
   | { status: "text"; text: string }
-  | { status: "media"; url: string; contentType: string; loaded: boolean }
+  | { status: "media"; url: string; contentType: string }
   | { status: "empty" };
 
 interface ListingCardPreviewProps {
@@ -74,7 +74,6 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
           status: "media",
           url: listingPreviewUrl(listing),
           contentType: previewContentType,
-          loaded: false,
         });
       })
       .catch(() => {
@@ -84,20 +83,7 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
     return () => {
       cancelled = true;
     };
-  }, [listing.id, listing.previewContentType, listing.description]);
-
-  const markMediaLoaded = () => {
-    setPreview((prev) =>
-      prev.status === "media" ? { ...prev, loaded: true } : prev,
-    );
-  };
-
-  const markMediaFailed = () => {
-    setPreview({
-      status: "text",
-      text: listing.description.slice(0, 280),
-    });
-  };
+  }, [listing]);
 
   const isZip = isZipContentType(listing.contentType);
   const previewKind =
@@ -114,16 +100,12 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
     preview.status === "media" &&
     (previewKind === "video" || previewKind === "audio");
 
-  const showMediaLoading = preview.status === "media" && !preview.loaded;
-
   return (
     <div
       className={`forge-card-preview${isInteractiveMedia ? " forge-card-preview--interactive" : ""}${preview.status === "media" && previewKind === "audio" ? " forge-card-preview--audio" : ""}${preview.status === "media" && previewKind === "pdf" ? " forge-card-preview--pdf" : ""}`}
     >
-      {(preview.status === "loading" || showMediaLoading) && (
-        <div className="forge-card-preview-placeholder forge-card-preview-placeholder--overlay">
-          {msg("loading")}
-        </div>
+      {preview.status === "loading" && (
+        <div className="forge-card-preview-placeholder">{msg("loading")}</div>
       )}
       {showZipBadge && <ArchivePreviewBadge />}
       {!showZipBadge && preview.status === "empty" && (
@@ -143,8 +125,6 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
           videoClassName="forge-card-preview-media forge-card-preview-video"
           audioClassName="forge-card-preview-audio"
           pdfClassName="forge-card-preview-pdf"
-          onLoaded={markMediaLoaded}
-          onFailed={markMediaFailed}
           mediaPlayHandlers={mediaPlayHandlers()}
           showAudioHeader={previewKind === "audio"}
         />
