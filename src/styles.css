@@ -1613,3 +1613,69 @@ a.seller-wallet-chip-addr:hover {
   margin-top: 1rem;
   margin-bottom: 0;
 }
+
+/* Floating community buttons (mirrors pr402 ipay.sh index.html) */
+.floating-community {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+  right: max(1.5rem, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 10050;
+  pointer-events: none;
+}
+
+.floating-community > * {
+  pointer-events: auto;
+}
+
+.floating-community-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  background-color: var(--fair-bg-secondary);
+  color: var(--fair-text-muted);
+  border: 1px solid var(--fair-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.floating-community-button:hover {
+  transform: translateY(-2px);
+  background-color: var(--fair-accent-surface);
+  color: var(--fair-primary);
+  border-color: var(--fair-border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 768px) {
+  .floating-community {
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    right: max(1rem, env(safe-area-inset-right, 0px));
+  }
+
+  .floating-community-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-community-button {
+    transition: none;
+  }
+
+  .floating-community-button:hover {
+    transform: none;
+  }
+}
