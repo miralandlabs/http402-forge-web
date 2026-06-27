@@ -193,8 +193,7 @@ export const en = {
   agentContentHash: "Content hash (SHA-256)",
   agentToolingTitle: "Agents — npm tooling",
   agentToolingLead:
-    "Browse and buy via HTTP API or install published packages. Payment rail: @pr402/buyer-typescript (via @http402/forge-client).",
-  agentToolingPaymentNote: "payment rail (via forge-client)",
+    "Browse and buy via HTTP API, or install the published Forge packages below.",
   agentToolingMcpSummary: "MCP config (Cursor / Claude Desktop)",
   agentToolingDocsLink: "Forge Agent API",
   agentToolingPortalManifest: "Portal manifest",
@@ -394,9 +393,7 @@ export const zh: Record<MessageKey, string> = {
   agentLicense: "许可",
   agentContentHash: "内容哈希 (SHA-256)",
   agentToolingTitle: "Agent — npm 工具",
-  agentToolingLead:
-    "通过 HTTP API 浏览购买，或安装已发布的 npm 包。支付层：@pr402/buyer-typescript（经 @http402/forge-client）。",
-  agentToolingPaymentNote: "支付层（经 forge-client）",
+  agentToolingLead: "通过 HTTP API 浏览购买，或安装下方已发布的 Forge npm 包。",
   agentToolingMcpSummary: "MCP 配置（Cursor / Claude Desktop）",
   agentToolingDocsLink: "Forge Agent API",
   agentToolingPortalManifest: "门户 manifest",

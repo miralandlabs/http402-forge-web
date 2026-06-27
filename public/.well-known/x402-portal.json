@@ -42,10 +42,6 @@
       "agentFilter": "?agent_friendly=true",
       "tags": ["forge", "digital-goods", "download", "exact"],
       "agentTooling": {
-        "paymentSdk": {
-          "npm": "@pr402/buyer-typescript",
-          "url": "https://www.npmjs.com/package/@pr402/buyer-typescript"
-        },
         "forgeSdk": {
           "npm": "@http402/forge-client",
           "url": "https://www.npmjs.com/package/@http402/forge-client",

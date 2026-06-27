@@ -1,9 +1,4 @@
 export const NPM_AGENT_TOOLING = {
-  paymentSdk: {
-    name: "@pr402/buyer-typescript",
-    url: "https://www.npmjs.com/package/@pr402/buyer-typescript",
-    install: "npm install @pr402/buyer-typescript",
-  },
   forgeSdk: {
     name: "@http402/forge-client",
     url: "https://www.npmjs.com/package/@http402/forge-client",

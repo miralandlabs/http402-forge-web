@@ -27,12 +27,6 @@ export function AgentToolingPanel() {
           </a>
           <code>{NPM_AGENT_TOOLING.mcp.run}</code>
         </li>
-        <li>
-          <a href={NPM_AGENT_TOOLING.paymentSdk.url} target="_blank" rel="noreferrer">
-            {NPM_AGENT_TOOLING.paymentSdk.name}
-          </a>
-          <span>{msg("agentToolingPaymentNote")}</span>
-        </li>
       </ul>
       <details className="agent-tooling-mcp">
         <summary>{msg("agentToolingMcpSummary")}</summary>
