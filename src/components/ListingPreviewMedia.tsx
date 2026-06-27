@@ -12,8 +12,8 @@ interface ListingPreviewMediaProps {
   videoClassName: string;
   audioClassName: string;
   pdfClassName: string;
-  onLoaded: () => void;
-  onFailed: () => void;
+  onLoaded?: () => void;
+  onFailed?: () => void;
   mediaPlayHandlers?: {
     onPlay: (e: SyntheticEvent<HTMLMediaElement>) => void;
     onPause: (e: SyntheticEvent<HTMLMediaElement>) => void;

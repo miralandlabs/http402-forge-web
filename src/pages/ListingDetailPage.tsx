@@ -13,6 +13,10 @@ import {
   fetchDownloadQuote,
   fetchListing,
   formatUsdc,
+  getCachedDownloadProof,
+  PaidDownloadTransferError,
+  redownloadWithWallet,
+  retryPaidDownload,
   type Listing,
   type PaymentProgressPhase,
 } from "../services/api";
@@ -25,6 +29,7 @@ import { useLocale } from "../hooks/useLocale";
 import { ListingPreviewMedia } from "../components/ListingPreviewMedia";
 import {
   fetchTextPreview,
+  listingPreviewPdfUrl,
   listingPreviewUrl,
   previewRenderKind,
   resolvePreviewContentType,
@@ -69,6 +74,12 @@ export function ListingDetailPage() {
   const [paymentPhase, setPaymentPhase] = useState<PaymentProgressPhase | null>(
     null,
   );
+  const [paidRetryAvailable, setPaidRetryAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    setPaidRetryAvailable(!!getCachedDownloadProof(id));
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -85,6 +96,19 @@ export function ListingDetailPage() {
     resolvePreviewContentType(listing)
       .then((previewContentType) => {
         if (cancelled) return;
+        const pdfSampleUrl = listingPreviewPdfUrl(listing);
+        if (pdfSampleUrl) {
+          setPreviewLoad({
+            status: "ready",
+            preview: {
+              kind: "media",
+              url: pdfSampleUrl,
+              contentType: "application/pdf",
+              loaded: true,
+            },
+          });
+          return;
+        }
         const kind = previewRenderKind(previewContentType);
         if (kind === "text") {
           fetchTextPreview(listing)
@@ -134,6 +158,7 @@ export function ListingDetailPage() {
   const markMediaLoaded = () => {
     setPreviewLoad((prev) => {
       if (prev.status !== "ready" || prev.preview.kind !== "media") return prev;
+      if (prev.preview.loaded) return prev;
       return {
         status: "ready",
         preview: { ...prev.preview, loaded: true },
@@ -182,9 +207,80 @@ export function ListingDetailPage() {
         setPaymentPhase,
       );
       setConfirmOpen(false);
-      triggerDownload(blob, listing?.title ?? "download");
+      setPaidRetryAvailable(false);
+      if (blob.size > 0) {
+        triggerDownload(blob, listing?.title ?? "download");
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
+        setPaidRetryAvailable(true);
+        setError(msg("downloadPaidRetryHint"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setBusy(false);
+      setPaymentPhase(null);
+    }
+  };
+
+  const onRetryPaidDownload = async () => {
+    if (!id) return;
+    setBusy(true);
+    setPaymentPhase(null);
+    setError(null);
+    try {
+      const blob = await retryPaidDownload(id, setPaymentPhase);
+      setPaidRetryAvailable(false);
+      if (blob.size > 0) {
+        triggerDownload(blob, listing?.title ?? "download");
+      }
+    } catch (e) {
+      if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
+        setPaidRetryAvailable(true);
+        setError(msg("downloadPaidRetryHint"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setBusy(false);
+      setPaymentPhase(null);
+    }
+  };
+
+  const onRecoverWithWallet = async () => {
+    if (!id) return;
+    setError(null);
+    if (!publicKey) {
+      setVisible(true);
+      return;
+    }
+    if (!signMessage) {
+      setError(msg("walletSignRequired"));
+      return;
+    }
+    setBusy(true);
+    setPaymentPhase(null);
+    try {
+      const blob = await redownloadWithWallet(
+        id,
+        {
+          publicKey: publicKey.toBase58(),
+          signMessage,
+        },
+        setPaymentPhase,
+      );
+      setPaidRetryAvailable(false);
+      setConfirmOpen(false);
+      if (blob.size > 0) {
+        triggerDownload(blob, listing?.title ?? "download");
+      }
+    } catch (e) {
+      if (e instanceof PaidDownloadTransferError) {
+        setError(msg("downloadPaidRetryHint"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setBusy(false);
       setPaymentPhase(null);
@@ -253,16 +349,29 @@ export function ListingDetailPage() {
   const mediaLoading =
     previewLoad.status === "ready" &&
     previewLoad.preview.kind === "media" &&
-    !previewLoad.preview.loaded;
+    !previewLoad.preview.loaded &&
+    previewRenderKind(previewLoad.preview.contentType) !== "pdf";
 
   return (
     <>
-      <article className="card" style={{ maxWidth: 720 }}>
+      <article className="card listing-detail-card">
         <h1>{listing.title}</h1>
         <p className="meta">
           {listing.category} · {formatUsdc(listing.priceMicroUsdc)} USDC ·{" "}
           {listing.deliveryScheme}
+          {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
+            <>
+              {" · "}
+              <span id="quality-trust" className="quality-score" title={msg("qualityTooltip")}>
+                {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
+                {listing.verifiedFeedbackCount} {msg("verifiedPurchases")})
+              </span>
+            </>
+          )}
         </p>
+        {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
+          <p className="meta quality-explainer">{msg("qualityExplainer")}</p>
+        )}
         <p className="meta seller-detail-meta">
           <SellerWalletChip wallet={listing.sellerWallet} linkToSeller />
           <span className="seller-detail-meta-sep" aria-hidden="true">
@@ -352,6 +461,30 @@ export function ListingDetailPage() {
           <p className="meta">{msg("previewUnavailable")}</p>
         )}
         <div className="actions">
+          {paidRetryAvailable && (
+            <button
+              type="button"
+              className="control-btn primary"
+              disabled={busy}
+              onClick={() => void onRetryPaidDownload()}
+            >
+              {busy ? msg("paymentConfirmDownloading") : msg("retryPaidDownload")}
+            </button>
+          )}
+          {(paidRetryAvailable || error) && publicKey && (
+            <button
+              type="button"
+              className="control-btn"
+              disabled={busy}
+              onClick={() => void onRecoverWithWallet()}
+            >
+              {busy && paymentPhase
+                ? paymentPhase === "signing"
+                  ? msg("paymentConfirmSigning")
+                  : msg("paymentConfirmDownloading")
+                : msg("recoverWithWallet")}
+            </button>
+          )}
           <button
             type="button"
             className="control-btn primary"

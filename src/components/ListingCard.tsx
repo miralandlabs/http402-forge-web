@@ -27,6 +27,21 @@ export function ListingCard({ listing, hideSellerWallet = false }: ListingCardPr
         </h3>
         <p className="meta">
           {categoryLabel ? msg(categoryLabel) : listing.category}
+          {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
+            <>
+              {" · "}
+              <span className="quality-score" title={msg("qualityTooltip")}>
+                {msg("qualityFromPurchases")}: {listing.qualityScore ?? "—"} (
+                {listing.verifiedFeedbackCount})
+              </span>{" "}
+              <Link
+                to={`/forge/${listing.id}#quality-trust`}
+                className="quality-learn-more"
+              >
+                {msg("qualityLearnMore")}
+              </Link>
+            </>
+          )}
         </p>
         {!hideSellerWallet && (
           <p className="meta forge-card-seller">

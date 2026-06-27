@@ -28,6 +28,16 @@ export function listingPreviewUrl(listing: Listing): string {
   return listing.previewUrl;
 }
 
+export function isPdfAsset(contentType: string): boolean {
+  const ct = contentType.split(";")[0]?.trim().toLowerCase() ?? "";
+  return ct === "application/pdf" || ct === "application/x-pdf";
+}
+
+/** Page-limited PDF sample for listing detail (not the paid asset). */
+export function listingPreviewPdfUrl(listing: Listing): string | null {
+  return listing.previewPdfUrl ?? null;
+}
+
 export function storedPreviewContentType(listing: Listing): string {
   return listing.previewContentType?.trim() ?? "";
 }
