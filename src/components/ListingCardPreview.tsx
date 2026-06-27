@@ -84,7 +84,7 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
     return () => {
       cancelled = true;
     };
-  }, [listing]);
+  }, [listing.id, listing.previewContentType, listing.description]);
 
   const markMediaLoaded = () => {
     setPreview((prev) =>
@@ -121,7 +121,9 @@ export function ListingCardPreview({ listing }: ListingCardPreviewProps) {
       className={`forge-card-preview${isInteractiveMedia ? " forge-card-preview--interactive" : ""}${preview.status === "media" && previewKind === "audio" ? " forge-card-preview--audio" : ""}${preview.status === "media" && previewKind === "pdf" ? " forge-card-preview--pdf" : ""}`}
     >
       {(preview.status === "loading" || showMediaLoading) && (
-        <div className="forge-card-preview-placeholder">{msg("loading")}</div>
+        <div className="forge-card-preview-placeholder forge-card-preview-placeholder--overlay">
+          {msg("loading")}
+        </div>
       )}
       {showZipBadge && <ArchivePreviewBadge />}
       {!showZipBadge && preview.status === "empty" && (

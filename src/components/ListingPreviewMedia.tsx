@@ -1,4 +1,4 @@
-import type { SyntheticEvent } from "react";
+import { useCallback, useEffect, useRef, type SyntheticEvent } from "react";
 import { MediaPreviewFrame } from "./MediaPreviewFrame";
 import { previewRenderKind } from "../utils/listingPreview";
 
@@ -21,6 +21,22 @@ interface ListingPreviewMediaProps {
   showAudioHeader?: boolean;
 }
 
+function syncImageLoaded(
+  img: HTMLImageElement,
+  onLoaded: () => void,
+  onFailed: () => void,
+) {
+  if (!img.complete) return;
+  if (img.naturalWidth > 0) onLoaded();
+  else onFailed();
+}
+
+function syncMediaLoaded(el: HTMLMediaElement, onLoaded: () => void) {
+  if (el.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    onLoaded();
+  }
+}
+
 export function ListingPreviewMedia({
   url,
   contentType,
@@ -37,10 +53,41 @@ export function ListingPreviewMedia({
   showAudioHeader = false,
 }: ListingPreviewMediaProps) {
   const kind = previewRenderKind(contentType);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const onImageRef = useCallback(
+    (img: HTMLImageElement | null) => {
+      imageRef.current = img;
+      if (!img) return;
+      syncImageLoaded(img, onLoaded, onFailed);
+    },
+    [onLoaded, onFailed],
+  );
+
+  useEffect(() => {
+    const img = imageRef.current;
+    if (!img) return;
+    syncImageLoaded(img, onLoaded, onFailed);
+  }, [url, onLoaded, onFailed]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    syncMediaLoaded(el, onLoaded);
+  }, [url, onLoaded]);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    syncMediaLoaded(el, onLoaded);
+  }, [url, onLoaded]);
 
   if (kind === "image") {
     return (
       <img
+        ref={onImageRef}
         src={url}
         alt={title}
         className={imageClassName}
@@ -54,6 +101,7 @@ export function ListingPreviewMedia({
     return (
       <MediaPreviewFrame kind="video">
         <video
+          ref={videoRef}
           src={url}
           className={videoClassName}
           controls
@@ -79,6 +127,7 @@ export function ListingPreviewMedia({
           </div>
         )}
         <audio
+          ref={audioRef}
           className={audioClassName}
           src={url}
           controls
