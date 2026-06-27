@@ -1,5 +1,4 @@
 import { PortalDoorCard } from "../components/PortalDoorCard";
-import { FloatingCommunity } from "../components/FloatingCommunity";
 import { portalDoors } from "../config/portalChannels";
 import { useLocale } from "../hooks/useLocale";
 
@@ -15,7 +14,6 @@ export function PortalHomePage() {
           <PortalDoorCard key={door.id} door={door} />
         ))}
       </div>
-      <FloatingCommunity />
     </section>
   );
 }
