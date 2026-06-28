@@ -72,6 +72,7 @@ export function VaultProvisionConfirmModal({
         </dl>
 
         <p className="payment-confirm-note">{msg("vaultProvisionConfirmNote")}</p>
+        <p className="payment-confirm-note meta">{msg("vaultProvisionConfirmSteps")}</p>
 
         <div className="confirm-actions">
           <button
@@ -88,7 +89,7 @@ export function VaultProvisionConfirmModal({
             disabled={busy}
             onClick={onConfirm}
           >
-            {busy ? msg("loading") : msg("paymentConfirmSign")}
+            {busy ? msg("vaultProvisionConfirmSigning") : msg("vaultProvisionConfirmContinue")}
           </button>
         </div>
       </div>

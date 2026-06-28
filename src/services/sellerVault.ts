@@ -70,12 +70,18 @@ export async function fetchProvisionTx(
   return (await res.json()) as ProvisionTxResponse;
 }
 
+export function isRpcBroadcastForbidden(err: unknown): boolean {
+  const raw = err instanceof Error ? err.message : String(err);
+  return /403|forbidden|access forbidden/i.test(raw);
+}
+
 export async function activateSellerVault(params: {
   sellerWallet: string;
   connection: Connection;
-  signTransaction: (
+  sendTransaction: (
     tx: VersionedTransaction,
-  ) => Promise<VersionedTransaction>;
+    connection: Connection,
+  ) => Promise<string>;
 }): Promise<void> {
   const body = await fetchProvisionTx(params.sellerWallet);
   if (
@@ -89,11 +95,7 @@ export async function activateSellerVault(params: {
   const tx = VersionedTransaction.deserialize(
     Buffer.from(body.transaction, "base64"),
   );
-  const signed = await params.signTransaction(tx);
-  const sig = await params.connection.sendRawTransaction(signed.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
+  const sig = await params.sendTransaction(tx, params.connection);
   await params.connection.confirmTransaction(sig, "confirmed");
 }
 
