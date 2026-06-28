@@ -67,12 +67,34 @@ export async function fetchProvisionTx(
       (err as { message?: string }).message ?? `provision-tx ${res.status}`,
     );
   }
-  return (await res.json()) as ProvisionTxResponse;
+  return parseProvisionResponse((await res.json()) as Record<string, unknown>);
 }
 
 export function isRpcBroadcastForbidden(err: unknown): boolean {
   const raw = err instanceof Error ? err.message : String(err);
   return /403|forbidden|access forbidden/i.test(raw);
+}
+
+export function isTransactionConfirmTimeout(err: unknown): boolean {
+  const raw = err instanceof Error ? err.message : String(err);
+  return /not confirmed in/i.test(raw);
+}
+
+/** Wallet adapters embed the signature when RPC confirm times out after broadcast. */
+export function extractSignatureFromError(err: unknown): string | null {
+  const raw = err instanceof Error ? err.message : String(err);
+  const match = raw.match(/signature `([1-9A-HJ-NP-Za-km-z]{87,88})`/);
+  return match?.[1] ?? null;
+}
+
+function parseProvisionResponse(raw: Record<string, unknown>): ProvisionTxResponse {
+  return {
+    statusCode: (raw.statusCode ?? raw.status_code) as string | undefined,
+    alreadyProvisioned: Boolean(
+      raw.alreadyProvisioned ?? raw.already_provisioned ?? false,
+    ),
+    transaction: (raw.transaction as string | undefined) ?? undefined,
+  };
 }
 
 export class VaultActivationPendingError extends Error {
@@ -112,7 +134,14 @@ export async function activateSellerVault(params: {
   const tx = VersionedTransaction.deserialize(
     Buffer.from(body.transaction, "base64"),
   );
-  return params.sendTransaction(tx, params.connection);
+  try {
+    return await params.sendTransaction(tx, params.connection);
+  } catch (e) {
+    // Wallets often broadcast then throw when their internal confirm hits ~30s.
+    const sig = extractSignatureFromError(e);
+    if (sig && isTransactionConfirmTimeout(e)) return sig;
+    throw e;
+  }
 }
 
 export function isSellerVaultReady(status: SellerStatus): boolean {
@@ -128,18 +157,16 @@ export async function activateAndWaitForSellerVault(params: {
   ) => Promise<string>;
   pollAttempts?: number;
   pollDelayMs?: number;
+  onBroadcast?: () => void;
 }): Promise<SellerStatus> {
   const sig = await activateSellerVault(params);
-  if (!sig) {
-    return fetchSellerStatus(params.sellerWallet);
-  }
-
+  params.onBroadcast?.();
   const attempts = params.pollAttempts ?? 45;
   const delayMs = params.pollDelayMs ?? 2000;
   const status = await waitForSellerVault(params.sellerWallet, attempts, delayMs);
   if (isSellerVaultReady(status)) return status;
-
-  throw new VaultActivationPendingError(sig);
+  if (sig) throw new VaultActivationPendingError(sig);
+  throw new Error("vault activation status unavailable");
 }
 
 export async function waitForSellerVault(

@@ -4,13 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { VaultProvisionConfirmModal } from "./VaultProvisionConfirmModal";
 import { useLocale } from "../hooks/useLocale";
 import {
-  activateSellerVault,
+  activateAndWaitForSellerVault,
   fetchSellerStatus,
   isRpcBroadcastForbidden,
-  isSellerVaultReady,
   solscanTxUrl,
   VaultActivationPendingError,
-  waitForSellerVault,
   type SellerStatus,
 } from "../services/sellerVault";
 import { buildVaultProvisionConfirmDetails } from "../services/vaultProvisionConfirm";
@@ -76,19 +74,14 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
     setError(null);
     setPendingSolscanUrl(null);
     try {
-      const sig = await activateSellerVault({
+      const ready = await activateAndWaitForSellerVault({
         sellerWallet: wallet,
         connection,
         sendTransaction,
+        pollAttempts: 45,
+        pollDelayMs: 2000,
+        onBroadcast: () => setActivatingPhase("confirming"),
       });
-      setActivatingPhase("confirming");
-      const ready = sig
-        ? await waitForSellerVault(wallet, 45, 2000)
-        : await fetchSellerStatus(wallet);
-      if (!isSellerVaultReady(ready)) {
-        if (!sig) throw new Error(msg("sellerVaultActivationFailed"));
-        throw new VaultActivationPendingError(sig);
-      }
       setStatus(ready);
       onStatusChange(ready);
       setConfirmOpen(false);
