@@ -75,6 +75,23 @@ export function isRpcBroadcastForbidden(err: unknown): boolean {
   return /403|forbidden|access forbidden/i.test(raw);
 }
 
+export class VaultActivationPendingError extends Error {
+  readonly signature: string;
+
+  constructor(signature: string) {
+    super("vault activation pending");
+    this.name = "VaultActivationPendingError";
+    this.signature = signature;
+  }
+}
+
+export function solscanTxUrl(signature: string, rpcEndpoint: string): string {
+  const cluster = rpcEndpoint.toLowerCase().includes("devnet")
+    ? "?cluster=devnet"
+    : "";
+  return `https://solscan.io/tx/${signature}${cluster}`;
+}
+
 export async function activateSellerVault(params: {
   sellerWallet: string;
   connection: Connection;
@@ -82,21 +99,47 @@ export async function activateSellerVault(params: {
     tx: VersionedTransaction,
     connection: Connection,
   ) => Promise<string>;
-}): Promise<void> {
+}): Promise<string> {
   const body = await fetchProvisionTx(params.sellerWallet);
   if (
     body.alreadyProvisioned ||
     body.statusCode === "ALREADY_PROVISIONED" ||
     !body.transaction
   ) {
-    return;
+    return "";
   }
 
   const tx = VersionedTransaction.deserialize(
     Buffer.from(body.transaction, "base64"),
   );
-  const sig = await params.sendTransaction(tx, params.connection);
-  await params.connection.confirmTransaction(sig, "confirmed");
+  return params.sendTransaction(tx, params.connection);
+}
+
+export function isSellerVaultReady(status: SellerStatus): boolean {
+  return status.vaultActivated || (status.canSell && !status.vaultCheckEnforced);
+}
+
+export async function activateAndWaitForSellerVault(params: {
+  sellerWallet: string;
+  connection: Connection;
+  sendTransaction: (
+    tx: VersionedTransaction,
+    connection: Connection,
+  ) => Promise<string>;
+  pollAttempts?: number;
+  pollDelayMs?: number;
+}): Promise<SellerStatus> {
+  const sig = await activateSellerVault(params);
+  if (!sig) {
+    return fetchSellerStatus(params.sellerWallet);
+  }
+
+  const attempts = params.pollAttempts ?? 45;
+  const delayMs = params.pollDelayMs ?? 2000;
+  const status = await waitForSellerVault(params.sellerWallet, attempts, delayMs);
+  if (isSellerVaultReady(status)) return status;
+
+  throw new VaultActivationPendingError(sig);
 }
 
 export async function waitForSellerVault(

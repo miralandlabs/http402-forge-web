@@ -6,6 +6,7 @@ interface VaultProvisionConfirmModalProps {
   open: boolean;
   details: VaultProvisionConfirmDetails;
   busy?: boolean;
+  busyLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -14,6 +15,7 @@ export function VaultProvisionConfirmModal({
   open,
   details,
   busy = false,
+  busyLabel,
   onConfirm,
   onCancel,
 }: VaultProvisionConfirmModalProps) {
@@ -89,7 +91,9 @@ export function VaultProvisionConfirmModal({
             disabled={busy}
             onClick={onConfirm}
           >
-            {busy ? msg("vaultProvisionConfirmSigning") : msg("vaultProvisionConfirmContinue")}
+            {busy
+              ? (busyLabel ?? msg("vaultProvisionConfirmSigning"))
+              : msg("vaultProvisionConfirmContinue")}
           </button>
         </div>
       </div>
