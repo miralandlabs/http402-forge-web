@@ -134,6 +134,13 @@ export const en = {
     "Review here first, then your wallet opens once to sign. You are not charged twice.",
   vaultProvisionConfirmContinue: "Continue in wallet",
   vaultProvisionConfirmSigning: "Waiting for wallet…",
+  vaultProvisionConfirmConfirming: "Confirming activation…",
+  sellerVaultActivationPending:
+    "Transaction submitted. Waiting for ipay.sh to register your vault.",
+  sellerVaultActivationPendingRefresh:
+    "If Solscan shows success, click Refresh status.",
+  sellerVaultActivationFailed: "Could not activate vault. Try again or refresh status.",
+  sellerVaultViewOnSolscan: "View on Solscan",
   sellerVaultRpcForbidden:
     "The network rejected broadcasting your signed transaction (RPC 403). You were not charged on-chain. Click Activate again — if it persists, try another wallet or contact support.",
   walletSendTxRequired: "Your wallet must support sending transactions to activate the vault.",
@@ -344,6 +351,13 @@ export const zh: Record<MessageKey, string> = {
     "先在此确认，随后钱包会打开一次供签名。不会重复扣费。",
   vaultProvisionConfirmContinue: "在钱包中继续",
   vaultProvisionConfirmSigning: "等待钱包…",
+  vaultProvisionConfirmConfirming: "正在确认激活…",
+  sellerVaultActivationPending:
+    "交易已提交，正在等待 ipay.sh 登记您的金库。",
+  sellerVaultActivationPendingRefresh:
+    "若 Solscan 显示成功，请点击「刷新状态」。",
+  sellerVaultActivationFailed: "无法激活金库。请重试或刷新状态。",
+  sellerVaultViewOnSolscan: "在 Solscan 查看",
   sellerVaultRpcForbidden:
     "网络拒绝了已签名交易的广播（RPC 403）。链上未扣费。请再次点击激活；若仍失败，请换钱包或联系支持。",
   walletSendTxRequired: "您的钱包须支持发送交易才能激活金库。",

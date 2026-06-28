@@ -7,6 +7,9 @@ import {
   activateSellerVault,
   fetchSellerStatus,
   isRpcBroadcastForbidden,
+  isSellerVaultReady,
+  solscanTxUrl,
+  VaultActivationPendingError,
   waitForSellerVault,
   type SellerStatus,
 } from "../services/sellerVault";
@@ -24,8 +27,12 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
   const [status, setStatus] = useState<SellerStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [activating, setActivating] = useState(false);
+  const [activatingPhase, setActivatingPhase] = useState<"wallet" | "confirming">(
+    "wallet",
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingSolscanUrl, setPendingSolscanUrl] = useState<string | null>(null);
 
   const wallet = publicKey?.toBase58();
 
@@ -45,6 +52,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
     }
     setLoading(true);
     setError(null);
+    setPendingSolscanUrl(null);
     try {
       const next = await fetchSellerStatus(wallet);
       setStatus(next);
@@ -64,26 +72,40 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
   const runActivate = async () => {
     if (!wallet || !sendTransaction) return;
     setActivating(true);
+    setActivatingPhase("wallet");
     setError(null);
+    setPendingSolscanUrl(null);
     try {
-      await activateSellerVault({
+      const sig = await activateSellerVault({
         sellerWallet: wallet,
         connection,
         sendTransaction,
       });
-      const ready = await waitForSellerVault(wallet);
+      setActivatingPhase("confirming");
+      const ready = sig
+        ? await waitForSellerVault(wallet, 45, 2000)
+        : await fetchSellerStatus(wallet);
+      if (!isSellerVaultReady(ready)) {
+        if (!sig) throw new Error(msg("sellerVaultActivationFailed"));
+        throw new VaultActivationPendingError(sig);
+      }
       setStatus(ready);
       onStatusChange(ready);
       setConfirmOpen(false);
     } catch (e) {
       setConfirmOpen(false);
-      if (isRpcBroadcastForbidden(e)) {
+      if (e instanceof VaultActivationPendingError) {
+        setPendingSolscanUrl(solscanTxUrl(e.signature, connection.rpcEndpoint));
+        setError(msg("sellerVaultActivationPending"));
+        void refresh();
+      } else if (isRpcBroadcastForbidden(e)) {
         setError(msg("sellerVaultRpcForbidden"));
       } else {
         setError(e instanceof Error ? e.message : String(e));
       }
     } finally {
       setActivating(false);
+      setActivatingPhase("wallet");
     }
   };
 
@@ -143,6 +165,13 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
           open={confirmOpen}
           details={provisionConfirm}
           busy={activating}
+          busyLabel={
+            activating
+              ? activatingPhase === "wallet"
+                ? msg("vaultProvisionConfirmSigning")
+                : msg("vaultProvisionConfirmConfirming")
+              : undefined
+          }
           onConfirm={() => void runActivate()}
           onCancel={() => {
             if (!activating) setConfirmOpen(false);
@@ -190,7 +219,20 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
             {msg("sellerVaultRefresh")}
           </button>
         </div>
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error">
+            {error}
+            {pendingSolscanUrl && (
+              <>
+                {" "}
+                <a href={pendingSolscanUrl} target="_blank" rel="noopener noreferrer">
+                  {msg("sellerVaultViewOnSolscan")}
+                </a>
+                . {msg("sellerVaultActivationPendingRefresh")}
+              </>
+            )}
+          </p>
+        )}
       </div>
     </>
   );
