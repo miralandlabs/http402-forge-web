@@ -6,6 +6,7 @@ import { useLocale } from "../hooks/useLocale";
 import {
   activateSellerVault,
   fetchSellerStatus,
+  isRpcBroadcastForbidden,
   waitForSellerVault,
   type SellerStatus,
 } from "../services/sellerVault";
@@ -17,7 +18,7 @@ interface SellerVaultGateProps {
 
 export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
   const { msg } = useLocale();
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
   const { setVisible } = useWalletModal();
   const [status, setStatus] = useState<SellerStatus | null>(null);
@@ -61,21 +62,26 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
   }, [refresh]);
 
   const runActivate = async () => {
-    if (!wallet || !signTransaction) return;
+    if (!wallet || !sendTransaction) return;
     setActivating(true);
     setError(null);
     try {
       await activateSellerVault({
         sellerWallet: wallet,
         connection,
-        signTransaction,
+        sendTransaction,
       });
       const ready = await waitForSellerVault(wallet);
       setStatus(ready);
       onStatusChange(ready);
       setConfirmOpen(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setConfirmOpen(false);
+      if (isRpcBroadcastForbidden(e)) {
+        setError(msg("sellerVaultRpcForbidden"));
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setActivating(false);
     }
@@ -86,8 +92,8 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
       setVisible(true);
       return;
     }
-    if (!signTransaction) {
-      setError(msg("walletSignTxRequired"));
+    if (!sendTransaction) {
+      setError(msg("walletSendTxRequired"));
       return;
     }
     setError(null);

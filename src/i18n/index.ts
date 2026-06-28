@@ -129,7 +129,14 @@ export const en = {
   vaultProvisionConfirmFrequency: "Charge",
   vaultProvisionConfirmOnce: "One-time (not per listing)",
   vaultProvisionConfirmNote:
-    "You will sign a Solana transaction in your wallet. No USDC is charged — only SOL for rent and fees.",
+    "One Solana transaction, one charge. No USDC — only SOL for rent and network fees.",
+  vaultProvisionConfirmSteps:
+    "Review here first, then your wallet opens once to sign. You are not charged twice.",
+  vaultProvisionConfirmContinue: "Continue in wallet",
+  vaultProvisionConfirmSigning: "Waiting for wallet…",
+  sellerVaultRpcForbidden:
+    "The network rejected broadcasting your signed transaction (RPC 403). You were not charged on-chain. Click Activate again — if it persists, try another wallet or contact support.",
+  walletSendTxRequired: "Your wallet must support sending transactions to activate the vault.",
   walletSignTxRequired: "Your wallet must support sign transaction to activate the vault.",
   sellDetailsTitle: "Step 2 — Listing details",
   fieldTitle: "Title",
@@ -332,7 +339,14 @@ export const zh: Record<MessageKey, string> = {
   vaultProvisionConfirmFrequency: "费用类型",
   vaultProvisionConfirmOnce: "一次性（非按次上架）",
   vaultProvisionConfirmNote:
-    "您将在钱包中签名 Solana 交易。不扣 USDC — 仅 SOL rent 与网络费。",
+    "仅一笔 Solana 交易、仅扣一次。不扣 USDC — 仅 SOL rent 与网络费。",
+  vaultProvisionConfirmSteps:
+    "先在此确认，随后钱包会打开一次供签名。不会重复扣费。",
+  vaultProvisionConfirmContinue: "在钱包中继续",
+  vaultProvisionConfirmSigning: "等待钱包…",
+  sellerVaultRpcForbidden:
+    "网络拒绝了已签名交易的广播（RPC 403）。链上未扣费。请再次点击激活；若仍失败，请换钱包或联系支持。",
+  walletSendTxRequired: "您的钱包须支持发送交易才能激活金库。",
   walletSignTxRequired: "您的钱包需支持签名交易以激活金库。",
   sellDetailsTitle: "步骤 2 — 商品信息",
   fieldTitle: "标题",
