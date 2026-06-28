@@ -109,7 +109,7 @@ export const en = {
   sellerVaultTitle: "Step 1 — Activate payout vault",
   sellerVaultConnectHint: "Connect your Solana wallet to check or activate your pr402 SplitVault.",
   sellerVaultBody:
-    "Forge requires an on-chain SplitVault before you can upload. You pay a small SOL network fee once (usually < 0.005 SOL on Devnet).",
+    "Forge requires an on-chain SplitVault before you can upload. You pay a small SOL network fee once (usually < 0.01 SOL).",
   sellerVaultPointFee:
     "Activate now to qualify for a 90 bps (0.90%) protocol fee on sales. Lazy activation on the first buyer payment is 100 bps (1.00%).",
   sellerVaultPointListingFree:
@@ -313,7 +313,7 @@ export const zh: Record<MessageKey, string> = {
   sellerVaultTitle: "步骤 1 — 激活收款金库",
   sellerVaultConnectHint: "连接 Solana 钱包以检查或激活 pr402 SplitVault。",
   sellerVaultBody:
-    "Forge 要求先链上激活 SplitVault 才能上传。一次性支付少量 SOL 网络费（Devnet 通常 < 0.005 SOL）。",
+    "Forge 要求先链上激活 SplitVault 才能上传。一次性支付少量 SOL 网络费（通常 < 0.01 SOL）。",
   sellerVaultPointFee:
     "现在激活 → 销售协议费 90 bps（0.90%）。首笔买家付款才懒激活 → 100 bps（1.00%）。",
   sellerVaultPointListingFree: "发布商品免费（仅需钱包签名认证）。",
