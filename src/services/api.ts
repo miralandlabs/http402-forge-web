@@ -75,17 +75,92 @@ export interface ListResponse {
   total: number;
 }
 
+export interface BuyerPurchase {
+  saleId: string;
+  listingId: string;
+  listingTitle: string;
+  listingStatus: string;
+  sellerWallet: string;
+  amountMicroUsdc: number;
+  txSignature: string;
+  settledAt: string;
+  feedbackOutcome?: string;
+}
+
+function parseBuyerPurchase(raw: Record<string, unknown>): BuyerPurchase {
+  return {
+    saleId: String(raw.saleId ?? raw.sale_id ?? ""),
+    listingId: String(raw.listingId ?? raw.listing_id ?? ""),
+    listingTitle: String(raw.listingTitle ?? raw.listing_title ?? ""),
+    listingStatus: String(raw.listingStatus ?? raw.listing_status ?? ""),
+    sellerWallet: String(raw.sellerWallet ?? raw.seller_wallet ?? ""),
+    amountMicroUsdc: Number(raw.amountMicroUsdc ?? raw.amount_micro_usdc ?? 0),
+    txSignature: String(raw.txSignature ?? raw.tx_signature ?? ""),
+    settledAt: String(raw.settledAt ?? raw.settled_at ?? ""),
+    feedbackOutcome:
+      String(raw.feedbackOutcome ?? raw.feedback_outcome ?? "").trim() || undefined,
+  };
+}
+
+export interface BuyerPurchasesResponse {
+  items: BuyerPurchase[];
+  total: number;
+}
+
+export async function fetchBuyerPurchases(params: {
+  buyerWallet: string;
+  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
+  limit?: number;
+  offset?: number;
+}): Promise<BuyerPurchasesResponse> {
+  const q = new URLSearchParams({ buyer_wallet: params.buyerWallet });
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  const challengeRes = await fetch(`${API_BASE}/api/v1/buyer/purchases-challenge?${q}`, {
+    cache: "no-store",
+  });
+  if (!challengeRes.ok) throw new Error(`buyer purchases challenge ${challengeRes.status}`);
+  const challengeRaw = (await challengeRes.json()) as Record<string, unknown>;
+  const challengeMessage = String(challengeRaw.message ?? "").replace(/\r\n/g, "\n");
+  const signature = await params.signMessage(new TextEncoder().encode(challengeMessage));
+  const res = await fetch(`${API_BASE}/api/v1/buyer/purchases?${q}`, {
+    cache: "no-store",
+    headers: {
+      "X-Forge-Buyer-Wallet": encodeUtf8Header(params.buyerWallet),
+      "X-Forge-Buyer-Challenge": encodeUtf8Header(challengeMessage),
+      "X-Forge-Buyer-Signature": Buffer.from(signature).toString("base64"),
+    },
+  });
+  if (!res.ok) throw new Error(`buyer purchases ${res.status}`);
+  const data = (await res.json()) as {
+    items: Record<string, unknown>[];
+    total: number;
+  };
+  return {
+    total: data.total,
+    items: data.items.map(parseBuyerPurchase),
+  };
+}
+
 export async function fetchListings(params: {
   category?: string;
   q?: string;
   sellerWallet?: string;
+  agentFriendly?: boolean;
   sort?: string;
+  limit?: number;
+  offset?: number;
 }): Promise<ListResponse> {
   const q = new URLSearchParams();
   if (params.category) q.set("category", params.category);
   if (params.q) q.set("q", params.q);
   if (params.sellerWallet) q.set("seller_wallet", params.sellerWallet);
+  if (params.agentFriendly != null) {
+    q.set("agent_friendly", params.agentFriendly ? "true" : "false");
+  }
   if (params.sort) q.set("sort", params.sort);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
   const res = await fetch(`${API_BASE}/api/v1/listings?${q}`);
   if (!res.ok) throw new Error(`listings ${res.status}`);
   const data = (await res.json()) as { items: Record<string, unknown>[]; total: number };
@@ -232,6 +307,8 @@ export interface ForgeCapabilities {
   presignedUpload: boolean;
   presignedDownload: boolean;
   objectDelivery: "redirect" | "proxy";
+  escrowSizeThresholdBytes?: number;
+  escrowLaneEnabled?: boolean;
 }
 
 export async function fetchCapabilities(): Promise<ForgeCapabilities | null> {
@@ -245,6 +322,10 @@ export async function fetchCapabilities(): Promise<ForgeCapabilities | null> {
       objectDelivery: (raw.objectDelivery ?? raw.object_delivery ?? "proxy") as
         | "redirect"
         | "proxy",
+      escrowSizeThresholdBytes: Number(
+        raw.escrowSizeThresholdBytes ?? raw.escrow_size_threshold_bytes ?? 0,
+      ) || undefined,
+      escrowLaneEnabled: Boolean(raw.escrowLaneEnabled ?? raw.escrow_lane_enabled),
     };
   } catch {
     return null;
@@ -422,16 +503,21 @@ async function downloadBlobFromDelivery(
   url: string,
   headers: Record<string, string>,
   filename: string,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   const delivery = await fetchRedirectDelivery(url, headers);
   try {
     const direct = await fetch(delivery.url);
-    if (direct.ok) return direct.blob();
+    if (direct.ok) {
+      return { blob: await direct.blob(), saleId: delivery.saleId };
+    }
   } catch {
     /* fall back to navigation download if R2 CORS blocks fetch */
   }
   triggerUrlDownload(delivery.url, filename);
-  return new Blob([], { type: delivery.contentType || "application/octet-stream" });
+  return {
+    blob: new Blob([], { type: delivery.contentType || "application/octet-stream" }),
+    saleId: delivery.saleId,
+  };
 }
 
 async function downloadPaidAsset(
@@ -439,11 +525,23 @@ async function downloadPaidAsset(
   headers: Record<string, string>,
   filename: string,
   listingId: string,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   try {
-    const blob = await downloadBlobFromDelivery(url, headers, filename);
+    const res = await fetch(`${url}?delivery=json`, { headers, cache: "no-store" });
+    if (res.ok) {
+      const contentType = res.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const result = await downloadBlobFromDelivery(url, headers, filename);
+        clearDownloadProof(listingId);
+        return result;
+      }
+      const saleId = res.headers.get("x-forge-sale-id") ?? undefined;
+      clearDownloadProof(listingId);
+      return { blob: await res.blob(), saleId: saleId ?? undefined };
+    }
+    const result = await downloadBlobFromDelivery(url, headers, filename);
     clearDownloadProof(listingId);
-    return blob;
+    return result;
   } catch (e) {
     throw new PaidDownloadTransferError(listingId, e);
   }
@@ -526,7 +624,7 @@ async function downloadWithStoredProof(
   listingId: string,
   proofJson: string,
   onProgress?: (phase: PaymentProgressPhase) => void,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   const url = `${API_BASE}/api/v1/listings/${listingId}/download`;
   onProgress?.("downloading");
   const headers = { "PAYMENT-SIGNATURE": encodePaymentSignatureHeader(proofJson) };
@@ -536,7 +634,7 @@ async function downloadWithStoredProof(
 export async function retryPaidDownload(
   listingId: string,
   onProgress?: (phase: PaymentProgressPhase) => void,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   const proofJson = getCachedDownloadProof(listingId);
   if (!proofJson) {
     throw new Error("No saved payment proof for this listing.");
@@ -549,7 +647,7 @@ export async function downloadWithPayment(
   challenge: PaymentRequiredBody,
   wallet: WalletSigner,
   onProgress?: (phase: PaymentProgressPhase) => void,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   const url = `${API_BASE}/api/v1/listings/${listingId}/download`;
   onProgress?.("signing");
   const proofJson = await buildPaymentSignature(challenge, wallet, DEFAULT_FACILITATOR);
@@ -564,9 +662,9 @@ export async function downloadWithPayment(
 export async function payAndDownload(
   listingId: string,
   wallet: WalletSigner,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   const quote = await fetchDownloadQuote(listingId);
-  if (quote.kind === "ready") return quote.blob;
+  if (quote.kind === "ready") return { blob: quote.blob };
   return downloadWithPayment(listingId, quote.challenge, wallet);
 }
 
@@ -612,7 +710,7 @@ export async function redownloadWithWallet(
   listingId: string,
   wallet: WalletMessageSigner,
   onProgress?: (phase: PaymentProgressPhase) => void,
-): Promise<Blob> {
+): Promise<{ blob: Blob; saleId?: string }> {
   onProgress?.("signing");
   const challenge = await fetchRedownloadChallenge(wallet.publicKey, listingId);
   const challengeMessage = challenge.message.replace(/\r\n/g, "\n");
@@ -623,9 +721,73 @@ export async function redownloadWithWallet(
   onProgress?.("downloading");
   const url = `${API_BASE}/api/v1/listings/${listingId}/redownload`;
   const headers = {
-    "X-Forge-Buyer-Wallet": wallet.publicKey,
+    "X-Forge-Buyer-Wallet": encodeUtf8Header(wallet.publicKey),
     "X-Forge-Buyer-Challenge": encodeUtf8Header(challengeMessage),
     "X-Forge-Buyer-Signature": Buffer.from(signature).toString("base64"),
   };
-  return downloadPaidAsset(url, headers, listingId, listingId);
+  const result = await downloadPaidAsset(url, headers, listingId, listingId);
+  return {
+    ...result,
+    saleId: result.saleId ?? (challenge.saleId || undefined),
+  };
+}
+
+export type SaleFeedbackOutcome =
+  | "as_described"
+  | "corrupt"
+  | "misleading"
+  | "hash_mismatch";
+
+export async function fetchFeedbackChallenge(
+  buyerWallet: string,
+  saleId: string,
+): Promise<SellerChallenge> {
+  const q = new URLSearchParams({
+    buyer_wallet: buyerWallet,
+    sale_id: saleId,
+  });
+  const res = await fetch(`${API_BASE}/api/v1/buyer/feedback-challenge?${q}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`feedback-challenge ${res.status}`);
+  const raw = (await res.json()) as Record<string, unknown>;
+  return {
+    message: String(raw.message ?? ""),
+    expiresAt: String(raw.expiresAt ?? raw.expires_at ?? ""),
+  };
+}
+
+export async function submitSaleFeedback(
+  saleId: string,
+  buyerWallet: string,
+  buyerChallenge: string,
+  buyerSignature: string,
+  outcome: SaleFeedbackOutcome,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/v1/sales/${saleId}/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      buyer_wallet: buyerWallet,
+      buyer_challenge: buyerChallenge,
+      buyer_signature: buyerSignature,
+      outcome,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string; message?: string }).error ??
+        (err as { message?: string }).message ??
+        `feedback ${res.status}`,
+    );
+  }
+}
+
+export async function sha256HexFromBlob(blob: Blob): Promise<string> {
+  const buf = await blob.arrayBuffer();
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }

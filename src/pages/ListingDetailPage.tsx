@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Buffer } from "buffer";
 import { DelistConfirmModal } from "../components/DelistConfirmModal";
+import { FeedbackModal, type FeedbackOutcome } from "../components/FeedbackModal";
 import { PaymentConfirmModal } from "../components/PaymentConfirmModal";
 import { SellerWalletChip } from "../components/SellerWalletChip";
 import {
@@ -11,12 +12,15 @@ import {
   downloadWithPayment,
   fetchDelistChallenge,
   fetchDownloadQuote,
+  fetchFeedbackChallenge,
   fetchListing,
   formatUsdc,
   getCachedDownloadProof,
   PaidDownloadTransferError,
   redownloadWithWallet,
   retryPaidDownload,
+  sha256HexFromBlob,
+  submitSaleFeedback,
   type Listing,
   type PaymentProgressPhase,
 } from "../services/api";
@@ -75,6 +79,10 @@ export function ListingDetailPage() {
     null,
   );
   const [paidRetryAvailable, setPaidRetryAvailable] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [pendingSaleId, setPendingSaleId] = useState<string | null>(null);
+  const [hashVerifyOk, setHashVerifyOk] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -166,6 +174,55 @@ export function ListingDetailPage() {
     });
   };
 
+  const afterSuccessfulDownload = async (blob: Blob, saleId?: string) => {
+    if (blob.size > 0) {
+      triggerDownload(blob, listing?.title ?? "download");
+    }
+    if (!saleId || !publicKey || !signMessage) return;
+    let hashOk: boolean | null = null;
+    if (listing?.contentHash) {
+      const digest = await sha256HexFromBlob(blob);
+      hashOk = digest === listing.contentHash.toLowerCase();
+      setHashVerifyOk(hashOk);
+    }
+    setPendingSaleId(saleId);
+    setFeedbackOpen(true);
+  };
+
+  const onFeedbackSubmit = async (outcome: FeedbackOutcome) => {
+    if (!pendingSaleId || !publicKey || !signMessage) {
+      setFeedbackOpen(false);
+      return;
+    }
+    setFeedbackBusy(true);
+    setError(null);
+    try {
+      const wallet = publicKey.toBase58();
+      const challenge = await fetchFeedbackChallenge(wallet, pendingSaleId);
+      const challengeMessage = challenge.message.replace(/\r\n/g, "\n");
+      const signature = await signMessage(
+        new TextEncoder().encode(challengeMessage),
+      );
+      let finalOutcome = outcome;
+      if (hashVerifyOk === false && outcome === "as_described") {
+        finalOutcome = "misleading";
+      }
+      await submitSaleFeedback(
+        pendingSaleId,
+        wallet,
+        challengeMessage,
+        Buffer.from(signature).toString("base64"),
+        finalOutcome,
+      );
+      setFeedbackOpen(false);
+      setPendingSaleId(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
+
   const onBuyClick = async () => {
     if (!id) return;
     setError(null);
@@ -178,7 +235,7 @@ export function ListingDetailPage() {
     try {
       const quote = await fetchDownloadQuote(id);
       if (quote.kind === "ready") {
-        triggerDownload(quote.blob, listing?.title ?? "download");
+        await afterSuccessfulDownload(quote.blob);
         return;
       }
       setPaymentChallenge(quote.challenge);
@@ -197,7 +254,7 @@ export function ListingDetailPage() {
     setPaymentPhase(null);
     setError(null);
     try {
-      const blob = await downloadWithPayment(
+      const { blob, saleId } = await downloadWithPayment(
         id,
         paymentChallenge,
         {
@@ -208,9 +265,7 @@ export function ListingDetailPage() {
       );
       setConfirmOpen(false);
       setPaidRetryAvailable(false);
-      if (blob.size > 0) {
-        triggerDownload(blob, listing?.title ?? "download");
-      }
+      await afterSuccessfulDownload(blob, saleId);
     } catch (e) {
       if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
         setPaidRetryAvailable(true);
@@ -230,11 +285,9 @@ export function ListingDetailPage() {
     setPaymentPhase(null);
     setError(null);
     try {
-      const blob = await retryPaidDownload(id, setPaymentPhase);
+      const { blob, saleId } = await retryPaidDownload(id, setPaymentPhase);
       setPaidRetryAvailable(false);
-      if (blob.size > 0) {
-        triggerDownload(blob, listing?.title ?? "download");
-      }
+      await afterSuccessfulDownload(blob, saleId);
     } catch (e) {
       if (e instanceof PaidDownloadTransferError || getCachedDownloadProof(id)) {
         setPaidRetryAvailable(true);
@@ -262,7 +315,7 @@ export function ListingDetailPage() {
     setBusy(true);
     setPaymentPhase(null);
     try {
-      const blob = await redownloadWithWallet(
+      const { blob, saleId } = await redownloadWithWallet(
         id,
         {
           publicKey: publicKey.toBase58(),
@@ -272,9 +325,7 @@ export function ListingDetailPage() {
       );
       setPaidRetryAvailable(false);
       setConfirmOpen(false);
-      if (blob.size > 0) {
-        triggerDownload(blob, listing?.title ?? "download");
-      }
+      await afterSuccessfulDownload(blob, saleId);
     } catch (e) {
       if (e instanceof PaidDownloadTransferError) {
         setError(msg("downloadPaidRetryHint"));
@@ -524,6 +575,19 @@ export function ListingDetailPage() {
         busy={busy}
         onConfirm={() => void onConfirmDelist()}
         onCancel={onCancelDelist}
+      />
+
+      <FeedbackModal
+        open={feedbackOpen}
+        hashOk={hashVerifyOk}
+        busy={feedbackBusy}
+        onSubmit={(outcome) => void onFeedbackSubmit(outcome)}
+        onDismiss={() => {
+          if (!feedbackBusy) {
+            setFeedbackOpen(false);
+            setPendingSaleId(null);
+          }
+        }}
       />
     </>
   );
