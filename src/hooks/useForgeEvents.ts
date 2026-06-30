@@ -24,8 +24,8 @@ export function useForgeEvents(onSale: (sale: ForgeSaleEvent) => void) {
   handlerRef.current = onSale;
 
   useEffect(() => {
-    if (!API_BASE) return;
-    const source = new EventSource(`${API_BASE}/api/v1/events`);
+    const eventsUrl = `${API_BASE || ""}/api/v1/events`;
+    const source = new EventSource(eventsUrl);
     source.addEventListener("sale", (ev) => {
       try {
         const sale = parseSaleEvent(JSON.parse(ev.data));

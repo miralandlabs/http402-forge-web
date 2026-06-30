@@ -31,6 +31,7 @@ export function Layout({ children }: LayoutProps) {
             {msg("navHub")}
           </NavLink>
           <NavLink to="/forge">{msg("navBrowse")}</NavLink>
+          <NavLink to="/forge/purchases">{msg("navPurchases")}</NavLink>
           <NavLink to="/sell">{msg("navSell")}</NavLink>
         </nav>
         <div className="header-controls">

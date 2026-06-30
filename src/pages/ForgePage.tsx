@@ -12,6 +12,8 @@ import { isSolanaWalletAddress, resolveBrowseSearch } from "../utils/browseSearc
 
 const FILTER_CATEGORIES = [{ id: "", labelKey: "filterAll" as const }, ...LISTING_CATEGORIES];
 
+const PAGE_SIZE = 20;
+
 type SortMode = "trending" | "newest" | "price_asc" | "price_desc" | "quality";
 
 export function ForgePage() {
@@ -19,13 +21,20 @@ export function ForgePage() {
   const [searchParams] = useSearchParams();
   const sellerWallet = searchParams.get("seller_wallet")?.trim() || undefined;
   const [category, setCategory] = useState("");
+  const [agentFriendlyOnly, setAgentFriendlyOnly] = useState(false);
   const [sort, setSort] = useState<SortMode>("trending");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [items, setItems] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOffset(0);
+  }, [category, debouncedSearch, sellerWallet, sort, agentFriendlyOnly]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -33,7 +42,9 @@ export function ForgePage() {
   }, [search]);
 
   useEffect(() => {
-    setLoading(true);
+    const isLoadMore = offset > 0;
+    if (isLoadMore) setLoadingMore(true);
+    else setLoading(true);
     const { q, sellerWallet: searchSellerWallet } = resolveBrowseSearch(
       debouncedSearch,
       sellerWallet,
@@ -42,16 +53,22 @@ export function ForgePage() {
       category: category || undefined,
       q,
       sellerWallet: searchSellerWallet,
+      agentFriendly: agentFriendlyOnly ? true : undefined,
       sort,
+      limit: PAGE_SIZE,
+      offset,
     })
       .then((r) => {
-        setItems(r.items);
+        setItems((prev) => (isLoadMore ? [...prev, ...r.items] : r.items));
         setTotal(r.total);
         setError(null);
       })
       .catch(() => setError(msg("errorLoad")))
-      .finally(() => setLoading(false));
-  }, [category, debouncedSearch, sellerWallet, sort, msg]);
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
+  }, [category, debouncedSearch, sellerWallet, sort, agentFriendlyOnly, offset, msg]);
 
   const effectiveSellerWallet =
     sellerWallet ??
@@ -102,6 +119,24 @@ export function ForgePage() {
                   {msg(c.labelKey)}
                 </button>
               ))}
+            </div>
+          </div>
+          <div className="browse-toolbar-section browse-toolbar-section--sort">
+            <span className="browse-toolbar-label" id="browse-agent-label">
+              {msg("filterAgentFriendly")}
+            </span>
+            <div
+              className="browse-chip-group browse-chip-group--compact"
+              role="group"
+              aria-labelledby="browse-agent-label"
+            >
+              <button
+                type="button"
+                className={`browse-chip${agentFriendlyOnly ? " is-active" : ""}`}
+                onClick={() => setAgentFriendlyOnly((v) => !v)}
+              >
+                {msg("filterAgentFriendly")}
+              </button>
             </div>
           </div>
           <div className="browse-toolbar-section browse-toolbar-section--sort">
@@ -174,6 +209,11 @@ export function ForgePage() {
       {loading && <p>{msg("loading")}</p>}
       {error && <p className="error">{error}</p>}
       {!loading && !error && items.length === 0 && <p>{emptyMessage}</p>}
+      {!loading && !error && items.length > 0 && (
+        <p className="meta browse-pagination-meta">
+          {msg("browseShowing")} {items.length} / {total}
+        </p>
+      )}
       <div className="grid forge-grid">
         {items.map((item) => (
           <ListingCard
@@ -183,6 +223,18 @@ export function ForgePage() {
           />
         ))}
       </div>
+      {!loading && !error && items.length < total && (
+        <div className="browse-load-more">
+          <button
+            type="button"
+            className="control-btn"
+            disabled={loadingMore}
+            onClick={() => setOffset((o) => o + PAGE_SIZE)}
+          >
+            {loadingMore ? msg("loading") : msg("loadMore")}
+          </button>
+        </div>
+      )}
     </>
   );
 }

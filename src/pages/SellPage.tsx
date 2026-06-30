@@ -1,14 +1,16 @@
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Buffer } from "buffer";
+import { AgentToolingPanel } from "../components/AgentToolingPanel";
 import { FileUploadPreview } from "../components/FileUploadPreview";
 import { SellerVaultGate } from "../components/SellerVaultGate";
-import { ToastBanner } from "../components/ToastBanner";
 import {
   LISTING_CATEGORIES,
   MAX_ASSET_BYTES,
   MAX_PREVIEW_BYTES,
+  formatBytes,
   type ListingCategoryId,
 } from "../constants/categories";
 import {
@@ -16,15 +18,18 @@ import {
   createListingPresigned,
   fetchCapabilities,
   fetchSellerChallenge,
+  type ForgeCapabilities,
 } from "../services/api";
 import type { SellerStatus } from "../services/sellerVault";
 import { useLocale } from "../hooks/useLocale";
 
 export function SellPage() {
   const { msg } = useLocale();
+  const navigate = useNavigate();
   const { publicKey, signMessage } = useWallet();
   const { setVisible } = useWalletModal();
   const [title, setTitle] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<ListingCategoryId>("art");
   const [price, setPrice] = useState("0.05");
@@ -34,15 +39,25 @@ export function SellPage() {
   const [asset, setAsset] = useState<File | null>(null);
   const [preview, setPreview] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [published, setPublished] = useState(false);
   const [busy, setBusy] = useState(false);
   const [canSell, setCanSell] = useState(false);
+  const [capabilities, setCapabilities] = useState<ForgeCapabilities | null>(null);
+
+  useEffect(() => {
+    fetchCapabilities().then(setCapabilities);
+  }, []);
 
   const onVaultStatusChange = useCallback((status: SellerStatus | null) => {
     setCanSell(status?.canSell ?? false);
   }, []);
 
+  const escrowThreshold =
+    capabilities?.escrowSizeThresholdBytes ?? MAX_ASSET_BYTES;
   const assetTooLarge = asset ? asset.size > MAX_ASSET_BYTES : false;
+  const assetEscrowBlocked =
+    asset && capabilities?.escrowLaneEnabled === false
+      ? asset.size >= escrowThreshold
+      : false;
   const previewTooLarge = preview ? preview.size > MAX_PREVIEW_BYTES : false;
 
   const onSubmit = async (e: FormEvent) => {
@@ -55,13 +70,16 @@ export function SellPage() {
       setError(msg("assetRequired"));
       return;
     }
-    if (assetTooLarge || previewTooLarge) {
-      setError(msg("fileTooLarge"));
+    if (assetTooLarge || previewTooLarge || assetEscrowBlocked) {
+      setError(
+        assetEscrowBlocked
+          ? msg("escrowSizeWarning").replace("{max}", formatBytes(escrowThreshold))
+          : msg("fileTooLarge"),
+      );
       return;
     }
     setBusy(true);
     setError(null);
-    setPublished(false);
     try {
       if (!publicKey) {
         setVisible(true);
@@ -85,6 +103,7 @@ export function SellPage() {
       );
       form.set("title", title);
       form.set("description", description);
+      if (displayName.trim()) form.set("display_name", displayName.trim());
       form.set("category", category);
       form.set("price_usdc", price);
       form.set("agent_friendly", agentFriendly ? "true" : "false");
@@ -94,8 +113,9 @@ export function SellPage() {
       if (preview) form.set("preview", preview, preview.name);
 
       const caps = await fetchCapabilities();
+      let listing;
       if (caps?.presignedUpload) {
-        await createListingPresigned({
+        listing = await createListingPresigned({
           sellerWallet: wallet,
           sellerChallenge: challengeMessage,
           sellerSignature: Buffer.from(signature).toString("base64"),
@@ -104,16 +124,16 @@ export function SellPage() {
           category,
           priceUsdc: price,
           agentFriendly,
-          displayName: undefined,
+          displayName: displayName.trim() || undefined,
           tags: agentFriendly && tags.trim() ? tags.trim() : undefined,
           license: agentFriendly && license ? license : undefined,
           asset,
           preview,
         });
       } else {
-        await createListing(form);
+        listing = await createListing(form);
       }
-      setPublished(true);
+      navigate(`/forge/${listing.id}`);
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
       const vaultBlocked =
@@ -126,20 +146,17 @@ export function SellPage() {
 
   return (
     <div className="sell-page">
-      {published && (
-        <ToastBanner
-          title={msg("listingCreatedTitle")}
-          detail={msg("listingCreatedDetail")}
-          dismissLabel={msg("toastDismiss")}
-          onDismiss={() => setPublished(false)}
-        />
-      )}
       <header className="sell-header">
         <h1>{msg("sellTitle")}</h1>
         <p className="meta">{msg("sellHint")}</p>
+        <p className="meta">
+          <a href="/forge/manage">{msg("manageListingsTitle")}</a>
+        </p>
       </header>
 
       <SellerVaultGate onStatusChange={onVaultStatusChange} />
+
+      <AgentToolingPanel />
 
       <form
         className={`sell-form${canSell ? "" : " sell-form--locked"}`}
@@ -161,6 +178,16 @@ export function SellPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={msg("fieldTitlePlaceholder")}
                 required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="displayName">{msg("fieldDisplayName")}</label>
+              <input
+                id="displayName"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder={msg("fieldDisplayNamePlaceholder")}
               />
             </div>
 
@@ -252,7 +279,14 @@ export function SellPage() {
             <FileUploadPreview
               id="asset"
               label={msg("fieldAsset")}
-              hint={msg("fieldAssetHint")}
+              hint={
+                capabilities?.escrowLaneEnabled === false
+                  ? msg("fieldAssetHintEscrow").replace(
+                      "{max}",
+                      formatBytes(escrowThreshold),
+                    )
+                  : msg("fieldAssetHint")
+              }
               file={asset}
               maxBytes={MAX_ASSET_BYTES}
               required
@@ -260,6 +294,11 @@ export function SellPage() {
               clearLabel={msg("clearFile")}
               onChange={setAsset}
             />
+            {assetEscrowBlocked && (
+              <p className="error">
+                {msg("escrowSizeWarning").replace("{max}", formatBytes(escrowThreshold))}
+              </p>
+            )}
             <FileUploadPreview
               id="preview"
               label={msg("fieldPreview")}

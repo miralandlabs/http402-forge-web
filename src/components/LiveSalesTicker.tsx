@@ -38,12 +38,9 @@ export function LiveSalesTicker({ sellerFilter }: LiveSalesTickerProps) {
   return (
     <div className="live-sales-ticker" role="status" aria-live="polite">
       <span className="live-sales-ticker-label">{msg("liveSale")}</span>
-      <Link
-        to={`/forge?seller_wallet=${encodeURIComponent(sale.buyerWallet)}`}
-        className="live-sales-ticker-link"
-      >
+      <span className="live-sales-ticker-buyer" title={sale.buyerWallet}>
         {sale.buyerWallet.slice(0, 6)}…
-      </Link>
+      </span>
       <span>{msg("liveSaleBought")}</span>
       <Link to={`/forge/${sale.listingId}`} className="live-sales-ticker-link">
         {msg("liveSaleListing")}
