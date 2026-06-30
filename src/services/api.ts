@@ -475,20 +475,7 @@ function triggerUrlDownload(url: string, filename: string) {
   a.click();
 }
 
-async function fetchRedirectDelivery(
-  url: string,
-  headers: Record<string, string>,
-): Promise<RedirectDelivery> {
-  const res = await fetch(`${url}?delivery=json`, { headers, cache: "no-store" });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(
-      (err as { error?: string; message?: string }).error ??
-        (err as { message?: string }).message ??
-        `download ${res.status}`,
-    );
-  }
-  const raw = (await res.json()) as Record<string, unknown>;
+function parseRedirectDeliveryJson(raw: Record<string, unknown>): RedirectDelivery {
   return {
     delivery: "redirect",
     url: String(raw.url ?? ""),
@@ -499,12 +486,10 @@ async function fetchRedirectDelivery(
   };
 }
 
-async function downloadBlobFromDelivery(
-  url: string,
-  headers: Record<string, string>,
+async function blobFromRedirectDelivery(
+  delivery: RedirectDelivery,
   filename: string,
 ): Promise<{ blob: Blob; saleId?: string }> {
-  const delivery = await fetchRedirectDelivery(url, headers);
   try {
     const direct = await fetch(delivery.url);
     if (direct.ok) {
@@ -520,6 +505,32 @@ async function downloadBlobFromDelivery(
   };
 }
 
+async function fetchRedirectDelivery(
+  url: string,
+  headers: Record<string, string>,
+): Promise<RedirectDelivery> {
+  const res = await fetch(`${url}?delivery=json`, { headers, cache: "no-store" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string; message?: string }).error ??
+        (err as { message?: string }).message ??
+        `download ${res.status}`,
+    );
+  }
+  const raw = (await res.json()) as Record<string, unknown>;
+  return parseRedirectDeliveryJson(raw);
+}
+
+async function downloadBlobFromDelivery(
+  url: string,
+  headers: Record<string, string>,
+  filename: string,
+): Promise<{ blob: Blob; saleId?: string }> {
+  const delivery = await fetchRedirectDelivery(url, headers);
+  return blobFromRedirectDelivery(delivery, filename);
+}
+
 async function downloadPaidAsset(
   url: string,
   headers: Record<string, string>,
@@ -531,7 +542,11 @@ async function downloadPaidAsset(
     if (res.ok) {
       const contentType = res.headers.get("content-type") ?? "";
       if (contentType.includes("application/json")) {
-        const result = await downloadBlobFromDelivery(url, headers, filename);
+        const raw = (await res.json()) as Record<string, unknown>;
+        const result = await blobFromRedirectDelivery(
+          parseRedirectDeliveryJson(raw),
+          filename,
+        );
         clearDownloadProof(listingId);
         return result;
       }
