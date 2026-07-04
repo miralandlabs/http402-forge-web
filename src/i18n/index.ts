@@ -76,6 +76,8 @@ export const en = {
   errorLoad: "Failed to load listings.",
   priceLabel: "Price",
   buyDownload: "Pay & download",
+  listingPriceAboveSuggested:
+    "Above $10 — exact rail only, no escrow. Fewer buyers; purchase at your own risk.",
   paymentConfirmTitle: "Confirm payment",
   paymentConfirmNetwork: "Network",
   paymentConfirmRecipient: "Recipient",
@@ -87,6 +89,8 @@ export const en = {
   paymentConfirmPlatformFee: "Platform fee",
   paymentConfirmNote:
     "You will sign a Solana transaction in your wallet. USDC is sent via pr402; the file downloads after settlement.",
+  paymentConfirmExactRailRisk:
+    "Above $10 — exact rail only, no escrow. You accept the purchase risk.",
   paymentConfirmCancel: "Cancel",
   paymentConfirmSign: "Confirm & sign",
   paymentConfirmSigning: "Waiting for wallet signature…",
@@ -105,22 +109,29 @@ export const en = {
   sellerVaultConnectHint: "Connect your Solana wallet to check or activate your pr402 SplitVault.",
   sellerVaultBody:
     "Forge requires an on-chain SplitVault before you can upload. You pay a small SOL network fee once (usually < 0.01 SOL).",
-  sellerVaultPointFee:
-    "Activate now to qualify for a 90 bps (0.90%) protocol fee on sales. Lazy activation on the first buyer payment is 100 bps (1.00%).",
+  sellerFeeRulesTitle: "pr402 protocol fees",
+  sellerFeeRulePerPayment: "Deducted on each buyer payment — not when you list.",
+  sellerFeeRuleRateSelf: "0.90% per payment if you activate your vault here.",
+  sellerFeeRuleRateLazy: "1.00% per payment if the vault is created on first sale.",
+  sellerFeeRuleActiveRate: "{fee}% per payment on your account.",
+  sellerFeeRuleMin: "Minimum $0.01 USDC per payment when the calculated fee is lower.",
+  sellerFeeRuleSweep: "USDC sweeps to your wallet at ${sweep} vault balance or more.",
   sellerVaultPointListingFree:
     "Publishing listings is free (wallet signature for authentication only).",
-  sellerVaultFeeRate: "Current protocol fee tier",
   sellerVaultActivate: "Activate vault in wallet",
   sellerVaultActivating: "Activating…",
   sellerVaultOpenIpay: "Open ipay.sh",
   sellerVaultRefresh: "Refresh status",
   sellerVaultRequired: "Activate your pr402 SplitVault before publishing.",
   sellerVaultReady: "SplitVault active — you can publish listings.",
+  sellerVaultFeeLearnMore: "Full fee details on ipay.sh",
   sellerVaultDevBypass: "Vault check disabled (local dev).",
   vaultProvisionConfirmTitle: "Confirm vault activation",
   vaultProvisionConfirmPurpose: "One-time SplitVault provision (SOL rent + network fee)",
   vaultProvisionConfirmWallet: "Wallet",
   vaultProvisionConfirmFeeTier: "Protocol fee after activation",
+  vaultProvisionConfirmPerPaymentLabel: "Per buyer payment",
+  sellerVaultConfirmPerPayment: "{fee}% (min $0.01). Sweeps at ${sweep}+.",
   vaultProvisionConfirmFrequency: "Charge",
   vaultProvisionConfirmOnce: "One-time (not per listing)",
   vaultProvisionConfirmNote:
@@ -147,6 +158,16 @@ export const en = {
   fieldDescriptionPlaceholder: "What the buyer gets, format, usage rights…",
   fieldCategory: "Category",
   fieldPrice: "Price (USDC)",
+  fieldPriceRangeHint:
+    "Suggested $0.05–under $10 USDC (exact rail). Higher prices are allowed.",
+  fieldPriceBelowSuggested:
+    "Under $0.05: the $0.01 minimum fee is over 20% of your price.",
+  fieldPriceAboveSuggested:
+    "Above $10 is allowed — still exact rail, not escrow. You may see fewer buyers.",
+  fieldPriceFeeHint:
+    "{fee}% per payment (min $0.01). Vault sweeps at ${sweep}+ to your wallet.",
+  fieldPriceFeeHintUnknown:
+    "0.90% if you activate here; 1.00% if first sale creates the vault. Min $0.01/payment. Sweeps at ${sweep}+.",
   fieldAsset: "Asset file (buyers download after payment)",
   fieldAssetHint: "Max 50 MB — the paid download delivered to buyers",
   fieldPreview: "Preview file (optional)",
@@ -164,6 +185,7 @@ export const en = {
   topPayers: "Top payers",
   hottest: "Hottest listings",
   footer: "Payments settle to creator vaults via pr402 — Forge is not custodian.",
+  footerDevelopers: "Developers → Forge Agent API",
   removeListing: "Remove listing",
   delistConfirmTitle: "Remove listing?",
   delistConfirm:
@@ -196,6 +218,7 @@ export const en = {
   agentLicense: "License",
   agentContentHash: "Content hash (SHA-256)",
   agentToolingTitle: "Agents — npm tooling",
+  agentToolingCollapsedSummary: "Publish via CLI / API (developers)",
   agentToolingLead:
     "Browse and buy via HTTP API, or install the published Forge packages below.",
   agentToolingMcpSummary: "MCP config (Cursor / Claude Desktop)",
@@ -314,6 +337,8 @@ export const zh: Record<MessageKey, string> = {
   errorLoad: "加载列表失败。",
   priceLabel: "价格",
   buyDownload: "支付并下载",
+  listingPriceAboveSuggested:
+    "$10 以上 — 仅 exact 通道，无 escrow。买家更少；购买风险自负。",
   paymentConfirmTitle: "确认支付",
   paymentConfirmNetwork: "网络",
   paymentConfirmRecipient: "收款方",
@@ -325,6 +350,8 @@ export const zh: Record<MessageKey, string> = {
   paymentConfirmPlatformFee: "平台费",
   paymentConfirmNote:
     "您将在钱包中签名 Solana 交易。USDC 通过 pr402 结算，完成后自动下载文件。",
+  paymentConfirmExactRailRisk:
+    "$10 以上 — 仅 exact 通道，无 escrow。您自行承担购买风险。",
   paymentConfirmCancel: "取消",
   paymentConfirmSign: "确认并签名",
   paymentConfirmSigning: "等待钱包签名…",
@@ -343,21 +370,28 @@ export const zh: Record<MessageKey, string> = {
   sellerVaultConnectHint: "连接 Solana 钱包以检查或激活 pr402 SplitVault。",
   sellerVaultBody:
     "Forge 要求先链上激活 SplitVault 才能上传。一次性支付少量 SOL 网络费（通常 < 0.01 SOL）。",
-  sellerVaultPointFee:
-    "现在激活 → 销售协议费 90 bps（0.90%）。首笔买家付款才懒激活 → 100 bps（1.00%）。",
+  sellerFeeRulesTitle: "pr402 协议费",
+  sellerFeeRulePerPayment: "在每次买家付款时扣除 — 上架时不扣。",
+  sellerFeeRuleRateSelf: "在此激活金库：每笔 0.90%。",
+  sellerFeeRuleRateLazy: "首笔销售才创建金库：每笔 1.00%。",
+  sellerFeeRuleActiveRate: "您的账户：每笔 {fee}%。",
+  sellerFeeRuleMin: "按费率算不足 $0.01 USDC 时，每笔最低收 $0.01。",
+  sellerFeeRuleSweep: "金库余额达 ${sweep} USDC 及以上时，扫款至您的钱包。",
   sellerVaultPointListingFree: "发布商品免费（仅需钱包签名认证）。",
-  sellerVaultFeeRate: "当前协议费率",
   sellerVaultActivate: "在钱包中激活金库",
   sellerVaultActivating: "激活中…",
   sellerVaultOpenIpay: "打开 ipay.sh",
   sellerVaultRefresh: "刷新状态",
   sellerVaultRequired: "请先激活 pr402 SplitVault 再发布。",
   sellerVaultReady: "SplitVault 已激活 — 可以发布商品。",
+  sellerVaultFeeLearnMore: "完整费率见 ipay.sh",
   sellerVaultDevBypass: "金库检查已关闭（本地开发）。",
   vaultProvisionConfirmTitle: "确认激活金库",
   vaultProvisionConfirmPurpose: "一次性 SplitVault 开通（SOL rent + 网络费）",
   vaultProvisionConfirmWallet: "钱包",
   vaultProvisionConfirmFeeTier: "激活后协议费率",
+  vaultProvisionConfirmPerPaymentLabel: "每笔买家付款",
+  sellerVaultConfirmPerPayment: "{fee}%（最低 $0.01）。${sweep}+ 扫款。",
   vaultProvisionConfirmFrequency: "费用类型",
   vaultProvisionConfirmOnce: "一次性（非按次上架）",
   vaultProvisionConfirmNote:
@@ -384,6 +418,14 @@ export const zh: Record<MessageKey, string> = {
   fieldDescriptionPlaceholder: "买家获得的内容、格式、使用说明…",
   fieldCategory: "分类",
   fieldPrice: "价格 (USDC)",
+  fieldPriceRangeHint:
+    "建议每笔 $0.05 至 $10 以下 USDC（exact 通道）。可设更高价格。",
+  fieldPriceBelowSuggested: "低于 $0.05：$0.01 最低费超过售价 20%。",
+  fieldPriceAboveSuggested:
+    "允许 $10 以上 — 仍为 exact 通道，无 escrow。买家可能更少。",
+  fieldPriceFeeHint: "每笔 {fee}%（最低 $0.01）。金库 ${sweep}+ 扫款至钱包。",
+  fieldPriceFeeHintUnknown:
+    "在此激活 0.90%；首笔销售创建金库 1.00%。每笔最低 $0.01。${sweep}+ 扫款。",
   fieldAsset: "资产文件（付款后下载）",
   fieldAssetHint: "最大 50 MB — 买家付费后获得的文件",
   fieldPreview: "预览文件（可选）",
@@ -401,6 +443,7 @@ export const zh: Record<MessageKey, string> = {
   topPayers: "消费最高",
   hottest: "最热商品",
   footer: "支付通过 pr402 结算至创作者金库 — Forge 不托管资金。",
+  footerDevelopers: "开发者 → Forge Agent API",
   removeListing: "下架商品",
   delistConfirmTitle: "下架商品？",
   delistConfirm: "从市场下架此商品？已付款的买家仍可重新下载。",
@@ -431,6 +474,7 @@ export const zh: Record<MessageKey, string> = {
   agentLicense: "许可",
   agentContentHash: "内容哈希 (SHA-256)",
   agentToolingTitle: "Agent — npm 工具",
+  agentToolingCollapsedSummary: "通过 CLI / API 发布（开发者）",
   agentToolingLead: "通过 HTTP API 浏览购买，或安装下方已发布的 Forge npm 包。",
   agentToolingMcpSummary: "MCP 配置（Cursor / Claude Desktop）",
   agentToolingDocsLink: "Forge Agent API",

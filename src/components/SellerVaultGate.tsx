@@ -2,6 +2,7 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { VaultProvisionConfirmModal } from "./VaultProvisionConfirmModal";
+import { SellerFeeRules } from "./SellerFeeRules";
 import { useLocale } from "../hooks/useLocale";
 import {
   activateAndWaitForSellerVault,
@@ -11,7 +12,8 @@ import {
   VaultActivationPendingError,
   type SellerStatus,
 } from "../services/sellerVault";
-import { buildVaultProvisionConfirmDetails } from "../services/vaultProvisionConfirm";
+import { buildVaultProvisionConfirmDetails, SELF_PROVISION_FEE_PERCENT } from "../services/vaultProvisionConfirm";
+import { sweepThresholdUsdc } from "../services/pr402SellerFees";
 
 interface SellerVaultGateProps {
   onStatusChange: (status: SellerStatus | null) => void;
@@ -36,11 +38,16 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
 
   const provisionConfirm = useMemo(() => {
     if (!wallet) return null;
+    const sweep = sweepThresholdUsdc(connection.rpcEndpoint);
     return buildVaultProvisionConfirmDetails({
       wallet,
       rpcEndpoint: connection.rpcEndpoint,
+      protocolFeeAfter: `${SELF_PROVISION_FEE_PERCENT}%`,
+      perPaymentFeeNote: msg("sellerVaultConfirmPerPayment")
+        .replace("{fee}", SELF_PROVISION_FEE_PERCENT)
+        .replace("{sweep}", sweep),
     });
-  }, [wallet, connection.rpcEndpoint]);
+  }, [wallet, connection.rpcEndpoint, msg]);
 
   const refresh = useCallback(async () => {
     if (!wallet) {
@@ -120,6 +127,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
       <div className="card seller-vault-gate">
         <h2>{msg("sellerVaultTitle")}</h2>
         <p>{msg("sellerVaultConnectHint")}</p>
+        <SellerFeeRules />
         <button type="button" className="control-btn primary" onClick={() => setVisible(true)}>
           {msg("walletConnect")}
         </button>
@@ -139,6 +147,18 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
     return (
       <div className="card seller-vault-gate seller-vault-gate--ready">
         <p className="seller-vault-ready">{msg("sellerVaultReady")}</p>
+        <SellerFeeRules activeFeePercent={status.protocolFeePercent} />
+        {status.sellerDashboardUrl && (
+          <p className="meta">
+            <a
+              href={status.sellerDashboardUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {msg("sellerVaultFeeLearnMore")}
+            </a>
+          </p>
+        )}
       </div>
     );
   }
@@ -176,14 +196,13 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
         <h2>{msg("sellerVaultTitle")}</h2>
         <div className="seller-vault-copy">
           <p>{msg("sellerVaultBody")}</p>
-          <p>{msg("sellerVaultPointFee")}</p>
+          <SellerFeeRules
+            activeFeePercent={
+              status?.vaultActivated ? status.protocolFeePercent : undefined
+            }
+          />
           <p>{msg("sellerVaultPointListingFree")}</p>
         </div>
-        {status?.protocolFeePercent && (
-          <p className="seller-vault-fee meta">
-            {msg("sellerVaultFeeRate")}: {status.protocolFeePercent}%
-          </p>
-        )}
         <div className="seller-vault-actions">
           <button
             type="button"

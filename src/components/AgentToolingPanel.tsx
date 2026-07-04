@@ -1,12 +1,16 @@
 import { FORGE_MCP_SNIPPET, NPM_AGENT_TOOLING } from "../config/agentTooling";
 import { useLocale } from "../hooks/useLocale";
 
-export function AgentToolingPanel() {
+interface AgentToolingPanelProps {
+  /** Collapsed `<details>` for seller page footer — keeps CLI/MCP out of the main funnel. */
+  collapsed?: boolean;
+}
+
+function AgentToolingContent() {
   const { msg } = useLocale();
 
   return (
-    <section className="agent-tooling" aria-labelledby="agent-tooling-title">
-      <h2 id="agent-tooling-title">{msg("agentToolingTitle")}</h2>
+    <>
       <p className="agent-tooling-lead">{msg("agentToolingLead")}</p>
       <ul className="agent-tooling-packages">
         <li>
@@ -43,6 +47,26 @@ export function AgentToolingPanel() {
           {msg("agentToolingPortalManifest")}
         </a>
       </p>
+    </>
+  );
+}
+
+export function AgentToolingPanel({ collapsed = false }: AgentToolingPanelProps) {
+  const { msg } = useLocale();
+
+  if (collapsed) {
+    return (
+      <details className="agent-tooling agent-tooling--collapsed">
+        <summary>{msg("agentToolingCollapsedSummary")}</summary>
+        <AgentToolingContent />
+      </details>
+    );
+  }
+
+  return (
+    <section className="agent-tooling" aria-labelledby="agent-tooling-title">
+      <h2 id="agent-tooling-title">{msg("agentToolingTitle")}</h2>
+      <AgentToolingContent />
     </section>
   );
 }

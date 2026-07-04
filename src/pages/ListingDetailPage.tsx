@@ -30,6 +30,10 @@ import {
   type PaymentConfirmDetails,
 } from "../services/paymentConfirm";
 import type { PaymentRequiredBody } from "../services/wallet";
+import {
+  exactRailPriceRangeIssue,
+  priceMicroUsdcToUsdc,
+} from "../services/pr402SellerFees";
 import { useLocale } from "../hooks/useLocale";
 import { ListingPreviewMedia } from "../components/ListingPreviewMedia";
 import {
@@ -414,6 +418,10 @@ export function ListingDetailPage() {
     !previewLoad.preview.loaded &&
     previewRenderKind(previewLoad.preview.contentType) !== "pdf";
 
+  const priceAboveSuggested =
+    exactRailPriceRangeIssue(priceMicroUsdcToUsdc(listing.priceMicroUsdc)) ===
+    "high";
+
   return (
     <>
       <article className="card listing-detail-card">
@@ -521,6 +529,9 @@ export function ListingDetailPage() {
         )}
         {previewLoad.status === "unavailable" && (
           <p className="meta">{msg("previewUnavailable")}</p>
+        )}
+        {priceAboveSuggested && (
+          <p className="meta field-hint--caution">{msg("listingPriceAboveSuggested")}</p>
         )}
         <div className="actions">
           {paidRetryAvailable && (

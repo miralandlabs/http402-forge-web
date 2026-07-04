@@ -47,4 +47,24 @@ describe("parsePaymentConfirmDetails", () => {
     expect(d.amountUi).toBe("—");
     expect(d.recipientShort).toBe("—");
   });
+
+  it("flags exact-rail listings at or above $10", () => {
+    const low = parsePaymentConfirmDetails(challenge());
+    expect(low.exactRailAboveSuggested).toBe(false);
+
+    const high = parsePaymentConfirmDetails(
+      challenge({
+        accepts: [
+          {
+            scheme: "exact",
+            network: "mainnet-beta",
+            asset: USDC_MAINNET,
+            amount: "10000000",
+            payTo: "buyA5hR1Z9KtHQRBTmLkjsFfjAabDwdZtrRC6edqxAJ",
+          },
+        ],
+      }),
+    );
+    expect(high.exactRailAboveSuggested).toBe(true);
+  });
 });

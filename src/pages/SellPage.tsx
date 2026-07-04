@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Buffer } from "buffer";
 import { AgentToolingPanel } from "../components/AgentToolingPanel";
@@ -21,12 +22,17 @@ import {
   type ForgeCapabilities,
 } from "../services/api";
 import type { SellerStatus } from "../services/sellerVault";
+import {
+  exactRailPriceRangeIssue,
+  sweepThresholdUsdc,
+} from "../services/pr402SellerFees";
 import { useLocale } from "../hooks/useLocale";
 
 export function SellPage() {
   const { msg } = useLocale();
   const navigate = useNavigate();
   const { publicKey, signMessage } = useWallet();
+  const { connection } = useConnection();
   const { setVisible } = useWalletModal();
   const [title, setTitle] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -41,6 +47,7 @@ export function SellPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [canSell, setCanSell] = useState(false);
+  const [sellerStatus, setSellerStatus] = useState<SellerStatus | null>(null);
   const [capabilities, setCapabilities] = useState<ForgeCapabilities | null>(null);
 
   useEffect(() => {
@@ -48,6 +55,7 @@ export function SellPage() {
   }, []);
 
   const onVaultStatusChange = useCallback((status: SellerStatus | null) => {
+    setSellerStatus(status);
     setCanSell(status?.canSell ?? false);
   }, []);
 
@@ -59,6 +67,10 @@ export function SellPage() {
       ? asset.size >= escrowThreshold
       : false;
   const previewTooLarge = preview ? preview.size > MAX_PREVIEW_BYTES : false;
+
+  const sweepThreshold = sweepThresholdUsdc(connection.rpcEndpoint);
+  const priceUsdc = Number.parseFloat(price);
+  const priceRangeIssue = exactRailPriceRangeIssue(priceUsdc);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -156,8 +168,6 @@ export function SellPage() {
 
       <SellerVaultGate onStatusChange={onVaultStatusChange} />
 
-      <AgentToolingPanel />
-
       <form
         className={`sell-form${canSell ? "" : " sell-form--locked"}`}
         onSubmit={onSubmit}
@@ -235,6 +245,24 @@ export function SellPage() {
                 onChange={(e) => setPrice(e.target.value)}
                 required
               />
+              <p className="field-hint meta">{msg("fieldPriceRangeHint")}</p>
+              {priceRangeIssue === "low" && (
+                <p className="field-hint meta field-hint--caution">
+                  {msg("fieldPriceBelowSuggested")}
+                </p>
+              )}
+              {priceRangeIssue === "high" && (
+                <p className="field-hint meta field-hint--caution">
+                  {msg("fieldPriceAboveSuggested")}
+                </p>
+              )}
+              <p className="field-hint meta">
+                {sellerStatus?.protocolFeePercent
+                  ? msg("fieldPriceFeeHint")
+                      .replace("{fee}", sellerStatus.protocolFeePercent)
+                      .replace("{sweep}", sweepThreshold)
+                  : msg("fieldPriceFeeHintUnknown").replace("{sweep}", sweepThreshold)}
+              </p>
             </div>
 
             <div className="field">
@@ -319,6 +347,8 @@ export function SellPage() {
           </div>
         </fieldset>
       </form>
+
+      <AgentToolingPanel collapsed />
     </div>
   );
 }

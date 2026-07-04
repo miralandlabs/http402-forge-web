@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { NPM_AGENT_TOOLING } from "../config/agentTooling";
 import { useLocale } from "../hooks/useLocale";
 import { getTheme, subscribeTheme, themeToggleIcon, toggleTheme } from "../services/theme";
 import { WalletConnectButton } from "./WalletConnectButton";
@@ -45,7 +46,12 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
       <main>{children}</main>
-      <footer className="site-footer">{msg("footer")}</footer>
+      <footer className="site-footer">
+        {msg("footer")}{" "}
+        <a href={NPM_AGENT_TOOLING.agentApiUrl} target="_blank" rel="noreferrer">
+          {msg("footerDevelopers")}
+        </a>
+      </footer>
       <FloatingCommunity />
     </div>
   );

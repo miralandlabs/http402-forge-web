@@ -114,7 +114,10 @@ export function PaymentConfirmModal({
           className="payment-confirm-note"
           aria-live={progressLabel ? "polite" : undefined}
         >
-          {progressLabel ?? msg("paymentConfirmNote")}
+          {progressLabel ??
+            (details.exactRailAboveSuggested
+              ? msg("paymentConfirmExactRailRisk")
+              : msg("paymentConfirmNote"))}
         </p>
 
         <div className="confirm-actions">
