@@ -113,9 +113,10 @@ export const en = {
   sellerFeeRulePerPayment: "Deducted on each buyer payment — not when you list.",
   sellerFeeRuleRateSelf: "0.90% per payment if you activate your vault here.",
   sellerFeeRuleRateLazy: "1.00% per payment if the vault is created on first sale.",
-  sellerFeeRuleActiveRate: "{fee}% per payment on your account.",
-  sellerFeeRuleMin: "Minimum $0.01 USDC per payment when the calculated fee is lower.",
-  sellerFeeRuleSweep: "USDC sweeps to your wallet at ${sweep} vault balance or more.",
+  sellerFeeRuleMin:
+    "If payment × fee rate < $0.01 USDC, the fee is $0.01 (minimum).",
+  sellerFeeRuleSweep:
+    "USDC sweeps to your wallet at ${mainnet}+ vault balance (mainnet). Preview/devnet: ${preview}.",
   sellerVaultPointListingFree:
     "Publishing listings is free (wallet signature for authentication only).",
   sellerVaultActivate: "Activate vault in wallet",
@@ -131,7 +132,8 @@ export const en = {
   vaultProvisionConfirmWallet: "Wallet",
   vaultProvisionConfirmFeeTier: "Protocol fee after activation",
   vaultProvisionConfirmPerPaymentLabel: "Per buyer payment",
-  sellerVaultConfirmPerPayment: "{fee}% (min $0.01). Sweeps at ${sweep}+.",
+  sellerVaultConfirmPerPayment:
+    "{fee}% (min $0.01). Sweeps at ${sweep}+ vault balance (mainnet).",
   vaultProvisionConfirmFrequency: "Charge",
   vaultProvisionConfirmOnce: "One-time (not per listing)",
   vaultProvisionConfirmNote:
@@ -374,9 +376,9 @@ export const zh: Record<MessageKey, string> = {
   sellerFeeRulePerPayment: "在每次买家付款时扣除 — 上架时不扣。",
   sellerFeeRuleRateSelf: "在此激活金库：每笔 0.90%。",
   sellerFeeRuleRateLazy: "首笔销售才创建金库：每笔 1.00%。",
-  sellerFeeRuleActiveRate: "您的账户：每笔 {fee}%。",
-  sellerFeeRuleMin: "按费率算不足 $0.01 USDC 时，每笔最低收 $0.01。",
-  sellerFeeRuleSweep: "金库余额达 ${sweep} USDC 及以上时，扫款至您的钱包。",
+  sellerFeeRuleMin: "若 付款 × 费率 < $0.01 USDC，则按 $0.01 最低费收取。",
+  sellerFeeRuleSweep:
+    "金库余额达 ${mainnet}+ USDC 时扫款至钱包（主网）。预览/开发网：${preview}。",
   sellerVaultPointListingFree: "发布商品免费（仅需钱包签名认证）。",
   sellerVaultActivate: "在钱包中激活金库",
   sellerVaultActivating: "激活中…",
@@ -391,7 +393,8 @@ export const zh: Record<MessageKey, string> = {
   vaultProvisionConfirmWallet: "钱包",
   vaultProvisionConfirmFeeTier: "激活后协议费率",
   vaultProvisionConfirmPerPaymentLabel: "每笔买家付款",
-  sellerVaultConfirmPerPayment: "{fee}%（最低 $0.01）。${sweep}+ 扫款。",
+  sellerVaultConfirmPerPayment:
+    "每笔 {fee}%（最低 $0.01）。主网金库 ${sweep}+ 时扫款。",
   vaultProvisionConfirmFrequency: "费用类型",
   vaultProvisionConfirmOnce: "一次性（非按次上架）",
   vaultProvisionConfirmNote:

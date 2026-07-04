@@ -1,8 +1,11 @@
-import { API_BASE } from "./api";
+/** Mainnet/production sweep threshold (vault balance). */
+export const SWEEP_MAINNET_USDC = "3.00";
+/** Preview/devnet sweep threshold (vault balance) — for faster test cycles. */
+export const SWEEP_PREVIEW_USDC = "0.10";
 
-/** Preview/devnet uses a lower sweep threshold for faster testing. */
-const SWEEP_PREVIEW_USDC = "0.10";
-const SWEEP_MAINNET_USDC = "3.00";
+/** Self-provision (activate on Sell) vs lazy (first sale). */
+export const SELF_PROVISION_FEE_BPS = 90;
+export const LAZY_PROVISION_FEE_BPS = 100;
 
 /** pr402 exact-rail suggested listing range [$0.05, $10.00) — guidance only. */
 export const EXACT_RAIL_PRICE_MIN_USDC = 0.05;
@@ -23,22 +26,7 @@ export function priceMicroUsdcToUsdc(micro: number): number {
   return micro / 1_000_000;
 }
 
-export function isPreviewEnvironment(rpcEndpoint: string): boolean {
-  const rpc = rpcEndpoint.toLowerCase();
-  const api = API_BASE.toLowerCase();
-  if (rpc.includes("devnet") || rpc.includes("testnet")) return true;
-  if (
-    api.includes("preview.") ||
-    api.includes("127.0.0.1") ||
-    api.includes("localhost")
-  ) {
-    return true;
-  }
-  return false;
-}
-
-export function sweepThresholdUsdc(rpcEndpoint: string): string {
-  return isPreviewEnvironment(rpcEndpoint)
-    ? SWEEP_PREVIEW_USDC
-    : SWEEP_MAINNET_USDC;
+/** Default sweep for single-value hints (production mainnet). */
+export function sweepMainnetUsdc(): string {
+  return SWEEP_MAINNET_USDC;
 }

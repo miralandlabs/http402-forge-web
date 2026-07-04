@@ -1,7 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Buffer } from "buffer";
 import { AgentToolingPanel } from "../components/AgentToolingPanel";
@@ -24,7 +23,7 @@ import {
 import type { SellerStatus } from "../services/sellerVault";
 import {
   exactRailPriceRangeIssue,
-  sweepThresholdUsdc,
+  sweepMainnetUsdc,
 } from "../services/pr402SellerFees";
 import { useLocale } from "../hooks/useLocale";
 
@@ -32,7 +31,6 @@ export function SellPage() {
   const { msg } = useLocale();
   const navigate = useNavigate();
   const { publicKey, signMessage } = useWallet();
-  const { connection } = useConnection();
   const { setVisible } = useWalletModal();
   const [title, setTitle] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -68,7 +66,7 @@ export function SellPage() {
       : false;
   const previewTooLarge = preview ? preview.size > MAX_PREVIEW_BYTES : false;
 
-  const sweepThreshold = sweepThresholdUsdc(connection.rpcEndpoint);
+  const sweepThreshold = sweepMainnetUsdc();
   const priceUsdc = Number.parseFloat(price);
   const priceRangeIssue = exactRailPriceRangeIssue(priceUsdc);
 

@@ -1,36 +1,46 @@
-import { useMemo } from "react";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { useLocale } from "../hooks/useLocale";
-import { sweepThresholdUsdc } from "../services/pr402SellerFees";
+import {
+  LAZY_PROVISION_FEE_BPS,
+  SELF_PROVISION_FEE_BPS,
+  SWEEP_MAINNET_USDC,
+  SWEEP_PREVIEW_USDC,
+} from "../services/pr402SellerFees";
 
 interface SellerFeeRulesProps {
-  /** When set, show the seller's active rate instead of self vs lazy tiers. */
-  activeFeePercent?: string;
+  /** Set when vault is active — shows the matching tier (90 vs 100 bps). */
+  feeBps?: number;
 }
 
-export function SellerFeeRules({ activeFeePercent }: SellerFeeRulesProps) {
+export function SellerFeeRules({ feeBps }: SellerFeeRulesProps) {
   const { msg } = useLocale();
-  const { connection } = useConnection();
-  const sweep = useMemo(
-    () => sweepThresholdUsdc(connection.rpcEndpoint),
-    [connection.rpcEndpoint],
-  );
+
+  const rateLines = (() => {
+    if (feeBps === SELF_PROVISION_FEE_BPS) {
+      return <li>{msg("sellerFeeRuleRateSelf")}</li>;
+    }
+    if (feeBps === LAZY_PROVISION_FEE_BPS) {
+      return <li>{msg("sellerFeeRuleRateLazy")}</li>;
+    }
+    return (
+      <>
+        <li>{msg("sellerFeeRuleRateSelf")}</li>
+        <li>{msg("sellerFeeRuleRateLazy")}</li>
+      </>
+    );
+  })();
 
   return (
     <div className="seller-fee-rules-block">
       <p className="seller-fee-rules-heading">{msg("sellerFeeRulesTitle")}</p>
       <ul className="seller-fee-rules">
         <li>{msg("sellerFeeRulePerPayment")}</li>
-        {activeFeePercent ? (
-          <li>{msg("sellerFeeRuleActiveRate").replace("{fee}", activeFeePercent)}</li>
-        ) : (
-          <>
-            <li>{msg("sellerFeeRuleRateSelf")}</li>
-            <li>{msg("sellerFeeRuleRateLazy")}</li>
-          </>
-        )}
+        {rateLines}
         <li>{msg("sellerFeeRuleMin")}</li>
-        <li>{msg("sellerFeeRuleSweep").replace("{sweep}", sweep)}</li>
+        <li>
+          {msg("sellerFeeRuleSweep")
+            .replace("{mainnet}", SWEEP_MAINNET_USDC)
+            .replace("{preview}", SWEEP_PREVIEW_USDC)}
+        </li>
       </ul>
     </div>
   );

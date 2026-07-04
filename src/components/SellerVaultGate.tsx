@@ -13,7 +13,7 @@ import {
   type SellerStatus,
 } from "../services/sellerVault";
 import { buildVaultProvisionConfirmDetails, SELF_PROVISION_FEE_PERCENT } from "../services/vaultProvisionConfirm";
-import { sweepThresholdUsdc } from "../services/pr402SellerFees";
+import { sweepMainnetUsdc } from "../services/pr402SellerFees";
 
 interface SellerVaultGateProps {
   onStatusChange: (status: SellerStatus | null) => void;
@@ -38,7 +38,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
 
   const provisionConfirm = useMemo(() => {
     if (!wallet) return null;
-    const sweep = sweepThresholdUsdc(connection.rpcEndpoint);
+    const sweep = sweepMainnetUsdc();
     return buildVaultProvisionConfirmDetails({
       wallet,
       rpcEndpoint: connection.rpcEndpoint,
@@ -147,7 +147,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
     return (
       <div className="card seller-vault-gate seller-vault-gate--ready">
         <p className="seller-vault-ready">{msg("sellerVaultReady")}</p>
-        <SellerFeeRules activeFeePercent={status.protocolFeePercent} />
+        <SellerFeeRules feeBps={status.feeBps} />
         {status.sellerDashboardUrl && (
           <p className="meta">
             <a
@@ -196,11 +196,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
         <h2>{msg("sellerVaultTitle")}</h2>
         <div className="seller-vault-copy">
           <p>{msg("sellerVaultBody")}</p>
-          <SellerFeeRules
-            activeFeePercent={
-              status?.vaultActivated ? status.protocolFeePercent : undefined
-            }
-          />
+          <SellerFeeRules feeBps={status?.vaultActivated ? status.feeBps : undefined} />
           <p>{msg("sellerVaultPointListingFree")}</p>
         </div>
         <div className="seller-vault-actions">
