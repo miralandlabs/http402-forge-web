@@ -147,7 +147,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
     return (
       <div className="card seller-vault-gate seller-vault-gate--ready">
         <p className="seller-vault-ready">{msg("sellerVaultReady")}</p>
-        <SellerFeeRules feeBps={status.feeBps} />
+        <SellerFeeRules />
         {status.sellerDashboardUrl && (
           <p className="meta">
             <a
@@ -196,7 +196,7 @@ export function SellerVaultGate({ onStatusChange }: SellerVaultGateProps) {
         <h2>{msg("sellerVaultTitle")}</h2>
         <div className="seller-vault-copy">
           <p>{msg("sellerVaultBody")}</p>
-          <SellerFeeRules feeBps={status?.vaultActivated ? status.feeBps : undefined} />
+          <SellerFeeRules />
           <p>{msg("sellerVaultPointListingFree")}</p>
         </div>
         <div className="seller-vault-actions">
