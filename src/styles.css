@@ -1146,6 +1146,31 @@ a.seller-wallet-chip-addr:hover {
   font-size: 0.85rem;
 }
 
+.agent-tooling--collapsed {
+  margin-top: 1.5rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.agent-tooling--collapsed summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--fair-text-secondary);
+  font-weight: 500;
+}
+
+.agent-tooling--collapsed[open] summary {
+  margin-bottom: 0.75rem;
+}
+
+.field-hint {
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+}
+
+.field-hint--caution {
+  color: color-mix(in srgb, #b45309 75%, var(--fair-text-secondary));
+}
+
 .forge-leaderboards {
   margin: 0 0 1.25rem;
 }
@@ -1199,6 +1224,28 @@ a.seller-wallet-chip-addr:hover {
   color: var(--fair-text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.seller-fee-rules-block {
+  margin: 0.65rem 0 0;
+}
+
+.seller-fee-rules-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.seller-fee-rules {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--fair-text-secondary);
+}
+
+.seller-fee-rules li + li {
+  margin-top: 0.2rem;
 }
 
 .seller-vault-fee {

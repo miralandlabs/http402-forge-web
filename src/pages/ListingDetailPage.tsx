@@ -23,12 +23,17 @@ import {
   submitSaleFeedback,
   type Listing,
   type PaymentProgressPhase,
+  type SaleFeedbackOutcome,
 } from "../services/api";
 import {
   parsePaymentConfirmDetails,
   type PaymentConfirmDetails,
 } from "../services/paymentConfirm";
 import type { PaymentRequiredBody } from "../services/wallet";
+import {
+  exactRailPriceRangeIssue,
+  priceMicroUsdcToUsdc,
+} from "../services/pr402SellerFees";
 import { useLocale } from "../hooks/useLocale";
 import { ListingPreviewMedia } from "../components/ListingPreviewMedia";
 import {
@@ -203,9 +208,9 @@ export function ListingDetailPage() {
       const signature = await signMessage(
         new TextEncoder().encode(challengeMessage),
       );
-      let finalOutcome = outcome;
+      let finalOutcome: SaleFeedbackOutcome = outcome;
       if (hashVerifyOk === false && outcome === "as_described") {
-        finalOutcome = "misleading";
+        finalOutcome = "hash_mismatch";
       }
       await submitSaleFeedback(
         pendingSaleId,
@@ -387,7 +392,7 @@ export function ListingDetailPage() {
         Buffer.from(signature).toString("base64"),
       );
       setDelistConfirmOpen(false);
-      navigate("/forge", { state: { toast: msg("delistSuccess") } });
+      navigate("/forge");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -395,13 +400,27 @@ export function ListingDetailPage() {
     }
   };
 
-  if (!listing) return <p>{msg("loading")}</p>;
+  if (!listing) {
+    if (error) {
+      return (
+        <article className="card listing-detail-card">
+          <p className="error">{error}</p>
+          <Link to="/forge">{msg("browseTitle")}</Link>
+        </article>
+      );
+    }
+    return <p>{msg("loading")}</p>;
+  }
 
   const mediaLoading =
     previewLoad.status === "ready" &&
     previewLoad.preview.kind === "media" &&
     !previewLoad.preview.loaded &&
     previewRenderKind(previewLoad.preview.contentType) !== "pdf";
+
+  const priceAboveSuggested =
+    exactRailPriceRangeIssue(priceMicroUsdcToUsdc(listing.priceMicroUsdc)) ===
+    "high";
 
   return (
     <>
@@ -510,6 +529,9 @@ export function ListingDetailPage() {
         )}
         {previewLoad.status === "unavailable" && (
           <p className="meta">{msg("previewUnavailable")}</p>
+        )}
+        {priceAboveSuggested && (
+          <p className="meta field-hint--caution">{msg("listingPriceAboveSuggested")}</p>
         )}
         <div className="actions">
           {paidRetryAvailable && (

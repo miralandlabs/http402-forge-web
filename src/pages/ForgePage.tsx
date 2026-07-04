@@ -4,7 +4,6 @@ import { fetchListings, type Listing } from "../services/api";
 import { LISTING_CATEGORIES } from "../constants/categories";
 import { ListingCard } from "../components/ListingCard";
 import { LiveSalesTicker } from "../components/LiveSalesTicker";
-import { AgentToolingPanel } from "../components/AgentToolingPanel";
 import { LeaderboardsPanel } from "../components/LeaderboardsPanel";
 import { SellerWalletChip } from "../components/SellerWalletChip";
 import { useLocale } from "../hooks/useLocale";
@@ -82,8 +81,6 @@ export function ForgePage() {
   return (
     <>
       <h1>{msg("browseTitle")}</h1>
-
-      <AgentToolingPanel />
 
       <LeaderboardsPanel />
 

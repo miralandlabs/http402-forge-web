@@ -68,6 +68,10 @@ export function VaultProvisionConfirmModal({
             <dd>{details.protocolFeeAfter}</dd>
           </div>
           <div>
+            <dt>{msg("vaultProvisionConfirmPerPaymentLabel")}</dt>
+            <dd>{details.perPaymentFeeNote}</dd>
+          </div>
+          <div>
             <dt>{msg("vaultProvisionConfirmFrequency")}</dt>
             <dd>{msg("vaultProvisionConfirmOnce")}</dd>
           </div>

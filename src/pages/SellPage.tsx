@@ -21,6 +21,10 @@ import {
   type ForgeCapabilities,
 } from "../services/api";
 import type { SellerStatus } from "../services/sellerVault";
+import {
+  exactRailPriceRangeIssue,
+  sweepMainnetUsdc,
+} from "../services/pr402SellerFees";
 import { useLocale } from "../hooks/useLocale";
 
 export function SellPage() {
@@ -41,6 +45,7 @@ export function SellPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [canSell, setCanSell] = useState(false);
+  const [sellerStatus, setSellerStatus] = useState<SellerStatus | null>(null);
   const [capabilities, setCapabilities] = useState<ForgeCapabilities | null>(null);
 
   useEffect(() => {
@@ -48,6 +53,7 @@ export function SellPage() {
   }, []);
 
   const onVaultStatusChange = useCallback((status: SellerStatus | null) => {
+    setSellerStatus(status);
     setCanSell(status?.canSell ?? false);
   }, []);
 
@@ -59,6 +65,10 @@ export function SellPage() {
       ? asset.size >= escrowThreshold
       : false;
   const previewTooLarge = preview ? preview.size > MAX_PREVIEW_BYTES : false;
+
+  const sweepThreshold = sweepMainnetUsdc();
+  const priceUsdc = Number.parseFloat(price);
+  const priceRangeIssue = exactRailPriceRangeIssue(priceUsdc);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -156,8 +166,6 @@ export function SellPage() {
 
       <SellerVaultGate onStatusChange={onVaultStatusChange} />
 
-      <AgentToolingPanel />
-
       <form
         className={`sell-form${canSell ? "" : " sell-form--locked"}`}
         onSubmit={onSubmit}
@@ -235,6 +243,24 @@ export function SellPage() {
                 onChange={(e) => setPrice(e.target.value)}
                 required
               />
+              <p className="field-hint meta">{msg("fieldPriceRangeHint")}</p>
+              {priceRangeIssue === "low" && (
+                <p className="field-hint meta field-hint--caution">
+                  {msg("fieldPriceBelowSuggested")}
+                </p>
+              )}
+              {priceRangeIssue === "high" && (
+                <p className="field-hint meta field-hint--caution">
+                  {msg("fieldPriceAboveSuggested")}
+                </p>
+              )}
+              <p className="field-hint meta">
+                {sellerStatus?.protocolFeePercent
+                  ? msg("fieldPriceFeeHint")
+                      .replace("{fee}", sellerStatus.protocolFeePercent)
+                      .replace("{sweep}", sweepThreshold)
+                  : msg("fieldPriceFeeHintUnknown").replace("{sweep}", sweepThreshold)}
+              </p>
             </div>
 
             <div className="field">
@@ -319,6 +345,8 @@ export function SellPage() {
           </div>
         </fieldset>
       </form>
+
+      <AgentToolingPanel collapsed />
     </div>
   );
 }

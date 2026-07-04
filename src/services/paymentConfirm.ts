@@ -1,5 +1,9 @@
 import type { Listing } from "./api";
 import type { PaymentRequiredBody } from "./wallet";
+import {
+  exactRailPriceRangeIssue,
+  priceMicroUsdcToUsdc,
+} from "./pr402SellerFees";
 
 const TOKEN_REGISTRY: Record<string, { symbol: string; decimals: number }> = {
   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: { symbol: "USDC", decimals: 6 },
@@ -27,6 +31,7 @@ export interface PaymentConfirmDetails {
   schemeLabel: string;
   platformFeeBps?: number;
   platformFeeWallet?: string;
+  exactRailAboveSuggested: boolean;
 }
 
 function pickAcceptLine(
@@ -107,6 +112,16 @@ export function parsePaymentConfirmDetails(
     if (wallet) platformFeeWallet = wallet;
   }
 
+  const amountRaw = Number(accepted.amount);
+  const priceUsdc =
+    Number.isFinite(amountRaw) && amountRaw > 0
+      ? amountRaw / 10 ** tokenInfo.decimals
+      : listing
+        ? priceMicroUsdcToUsdc(listing.priceMicroUsdc)
+        : NaN;
+  const exactRailAboveSuggested =
+    exactRailPriceRangeIssue(priceUsdc) === "high";
+
   return {
     productTitle,
     amountUi: formatAmount(accepted.amount, tokenInfo.decimals),
@@ -119,5 +134,6 @@ export function parsePaymentConfirmDetails(
     schemeLabel: schemeLabel(String(accepted.scheme ?? "")),
     platformFeeBps,
     platformFeeWallet,
+    exactRailAboveSuggested,
   };
 }

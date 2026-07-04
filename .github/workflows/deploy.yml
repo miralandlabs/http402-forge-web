@@ -54,6 +54,7 @@ jobs:
           fi
 
       - run: npm ci
+      - run: npm test
       - run: npm run build
 
       - name: Install Vercel CLI

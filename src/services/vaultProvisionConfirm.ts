@@ -3,6 +3,7 @@ export interface VaultProvisionConfirmDetails {
   walletShort: string;
   costEstimate: string;
   protocolFeeAfter: string;
+  perPaymentFeeNote: string;
 }
 
 function shortAddress(addr: string): string {
@@ -24,15 +25,22 @@ function networkFromRpcEndpoint(endpoint: string): {
   return { label: "Solana Mainnet", isDevnet: false };
 }
 
+/** Self-provision tier (bps / 100 → percent string). */
+export const SELF_PROVISION_FEE_PERCENT = "0.90";
+
 export function buildVaultProvisionConfirmDetails(params: {
   wallet: string;
   rpcEndpoint: string;
+  protocolFeeAfter?: string;
+  perPaymentFeeNote: string;
 }): VaultProvisionConfirmDetails {
   const { label, isDevnet } = networkFromRpcEndpoint(params.rpcEndpoint);
+  const fee = params.protocolFeeAfter ?? `${SELF_PROVISION_FEE_PERCENT}%`;
   return {
     networkLabel: label,
     walletShort: shortAddress(params.wallet),
     costEstimate: isDevnet ? "< 0.005 SOL" : "< 0.01 SOL",
-    protocolFeeAfter: "0.90%",
+    protocolFeeAfter: fee,
+    perPaymentFeeNote: params.perPaymentFeeNote,
   };
 }
