@@ -8,6 +8,7 @@ import { FileUploadPreview } from "../components/FileUploadPreview";
 import { SellerVaultGate } from "../components/SellerVaultGate";
 import {
   LISTING_CATEGORIES,
+  ESCROW_SIZE_THRESHOLD_BYTES,
   MAX_ASSET_BYTES,
   MAX_PREVIEW_BYTES,
   formatBytes,
@@ -58,7 +59,7 @@ export function SellPage() {
   }, []);
 
   const escrowThreshold =
-    capabilities?.escrowSizeThresholdBytes ?? MAX_ASSET_BYTES;
+    capabilities?.escrowSizeThresholdBytes ?? ESCROW_SIZE_THRESHOLD_BYTES;
   const assetTooLarge = asset ? asset.size > MAX_ASSET_BYTES : false;
   const assetEscrowBlocked =
     asset && capabilities?.escrowLaneEnabled === false

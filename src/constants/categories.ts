@@ -8,9 +8,10 @@ export const LISTING_CATEGORIES = [
 
 export type ListingCategoryId = (typeof LISTING_CATEGORIES)[number]["id"];
 
-/** Match http402-forge-api defaults (MAX_ASSET_BYTES / MAX_PREVIEW_BYTES). */
-export const MAX_ASSET_BYTES = 52_428_800;
-export const MAX_PREVIEW_BYTES = 5_242_880;
+/** Match http402-forge-api defaults (MAX_ASSET_BYTES / ESCROW_SIZE_THRESHOLD_BYTES / MAX_PREVIEW_BYTES). */
+export const MAX_ASSET_BYTES = 104_857_600;
+export const ESCROW_SIZE_THRESHOLD_BYTES = 104_857_600;
+export const MAX_PREVIEW_BYTES = 10_485_760;
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
