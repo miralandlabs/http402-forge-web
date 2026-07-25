@@ -105,7 +105,11 @@ export function ManageListingsPage() {
                   <td>
                     <Link to={`/forge/${item.id}`}>{item.title}</Link>
                   </td>
-                  <td>{formatUsdc(item.priceMicroUsdc)} USDC</td>
+                  <td>
+                    {item.priceMicroUsdc === 0
+                      ? msg("freePrice")
+                      : `${formatUsdc(item.priceMicroUsdc)} USDC`}
+                  </td>
                   <td>{item.deliveryScheme}</td>
                   <td className="manage-listings-actions">
                     <Link to={`/forge/${item.id}`} className="control-btn">

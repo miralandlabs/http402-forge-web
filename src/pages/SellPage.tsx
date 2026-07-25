@@ -69,11 +69,13 @@ export function SellPage() {
 
   const sweepThreshold = sweepMainnetUsdc();
   const priceUsdc = Number.parseFloat(price);
+  const isFreeListing = Number.isFinite(priceUsdc) && priceUsdc === 0;
+  const formUnlocked = canSell || isFreeListing;
   const priceRangeIssue = exactRailPriceRangeIssue(priceUsdc);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!canSell) {
+    if (!formUnlocked) {
       setError(msg("sellerVaultRequired"));
       return;
     }
@@ -168,14 +170,12 @@ export function SellPage() {
       <SellerVaultGate onStatusChange={onVaultStatusChange} />
 
       <form
-        className={`sell-form${canSell ? "" : " sell-form--locked"}`}
+        className={`sell-form${formUnlocked ? "" : " sell-form--locked"}`}
         onSubmit={onSubmit}
-        aria-disabled={!canSell}
+        aria-disabled={!formUnlocked}
       >
-        <fieldset
-          className="sell-fieldset sell-grid"
-          disabled={!canSell}
-        >
+        {/* Keep fields editable so sellers can set price to 0 (free) without a vault. */}
+        <fieldset className="sell-fieldset sell-grid">
           <div className="card sell-details">
             <h2>{msg("sellDetailsTitle")}</h2>
 
@@ -239,7 +239,7 @@ export function SellPage() {
                 id="price"
                 type="number"
                 step="0.01"
-                min="0.01"
+                min="0"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 required
@@ -339,7 +339,11 @@ export function SellPage() {
           </div>
 
           <div className="sell-actions">
-            <button type="submit" className="control-btn primary" disabled={busy || !canSell}>
+            <button
+              type="submit"
+              className="control-btn primary"
+              disabled={busy || !formUnlocked}
+            >
               {busy ? msg("loading") : msg("submitListing")}
             </button>
             {error && <p className="error">{error}</p>}

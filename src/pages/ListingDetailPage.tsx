@@ -231,7 +231,8 @@ export function ListingDetailPage() {
   const onBuyClick = async () => {
     if (!id) return;
     setError(null);
-    if (!publicKey || !signTransaction) {
+    const isFree = listing?.priceMicroUsdc === 0;
+    if (!isFree && (!publicKey || !signTransaction)) {
       setVisible(true);
       return;
     }
@@ -241,6 +242,10 @@ export function ListingDetailPage() {
       const quote = await fetchDownloadQuote(id);
       if (quote.kind === "ready") {
         await afterSuccessfulDownload(quote.blob);
+        return;
+      }
+      if (!publicKey || !signTransaction) {
+        setVisible(true);
         return;
       }
       setPaymentChallenge(quote.challenge);
@@ -427,7 +432,11 @@ export function ListingDetailPage() {
       <article className="card listing-detail-card">
         <h1>{listing.title}</h1>
         <p className="meta">
-          {listing.category} · {formatUsdc(listing.priceMicroUsdc)} USDC ·{" "}
+          {listing.category} ·{" "}
+          {listing.priceMicroUsdc === 0
+            ? msg("freePrice")
+            : `${formatUsdc(listing.priceMicroUsdc)} USDC`}{" "}
+          ·{" "}
           {listing.deliveryScheme}
           {listing.verifiedFeedbackCount != null && listing.verifiedFeedbackCount > 0 && (
             <>
@@ -564,7 +573,11 @@ export function ListingDetailPage() {
             disabled={busy && !confirmOpen}
             onClick={onBuyClick}
           >
-            {busy && !confirmOpen ? msg("loading") : msg("buyDownload")}
+            {busy && !confirmOpen
+              ? msg("loading")
+              : listing.priceMicroUsdc === 0
+                ? msg("downloadFree")
+                : msg("buyDownload")}
           </button>
           {isOwner && (
             <button
