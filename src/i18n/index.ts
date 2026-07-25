@@ -75,7 +75,9 @@ export const en = {
   noListings: "No listings yet.",
   errorLoad: "Failed to load listings.",
   priceLabel: "Price",
+  freePrice: "Free",
   buyDownload: "Pay & download",
+  downloadFree: "Download",
   listingPriceAboveSuggested:
     "Above $10 — exact rail only, no escrow. Fewer buyers; purchase at your own risk.",
   paymentConfirmTitle: "Confirm payment",
@@ -104,7 +106,8 @@ export const en = {
   viewDetails: "View details",
   previewUnavailable: "Preview unavailable for this file type.",
   sellTitle: "Sell your work",
-  sellHint: "Activate your pr402 SplitVault once, then publish (signature only).",
+  sellHint:
+    "Paid listings need a pr402 SplitVault once. Price 0 is free to download (no vault).",
   sellerVaultTitle: "Step 1 — Activate payout vault",
   sellerVaultConnectHint: "Connect your Solana wallet to check or activate your pr402 SplitVault.",
   sellerVaultBody:
@@ -161,7 +164,7 @@ export const en = {
   fieldCategory: "Category",
   fieldPrice: "Price (USDC)",
   fieldPriceRangeHint:
-    "Suggested $0.05–under $10 USDC (exact rail). Higher prices are allowed.",
+    "Use 0 for free download. Paid: suggested $0.05–under $10 USDC (exact rail); min $0.01.",
   fieldPriceBelowSuggested:
     "Under $0.05: the $0.01 minimum fee is over 20% of your price.",
   fieldPriceAboveSuggested:
@@ -338,7 +341,9 @@ export const zh: Record<MessageKey, string> = {
   noListings: "暂无商品。",
   errorLoad: "加载列表失败。",
   priceLabel: "价格",
+  freePrice: "免费",
   buyDownload: "支付并下载",
+  downloadFree: "下载",
   listingPriceAboveSuggested:
     "$10 以上 — 仅 exact 通道，无 escrow。买家更少；购买风险自负。",
   paymentConfirmTitle: "确认支付",
@@ -367,7 +372,7 @@ export const zh: Record<MessageKey, string> = {
   viewDetails: "查看详情",
   previewUnavailable: "此文件类型暂无预览。",
   sellTitle: "出售商品",
-  sellHint: "先一次性激活 pr402 SplitVault，再发布商品（仅签名）。",
+  sellHint: "付费商品需一次性激活 pr402 SplitVault。价格填 0 为免费下载（无需金库）。",
   sellerVaultTitle: "步骤 1 — 激活收款金库",
   sellerVaultConnectHint: "连接 Solana 钱包以检查或激活 pr402 SplitVault。",
   sellerVaultBody:
@@ -422,7 +427,7 @@ export const zh: Record<MessageKey, string> = {
   fieldCategory: "分类",
   fieldPrice: "价格 (USDC)",
   fieldPriceRangeHint:
-    "建议每笔 $0.05 至 $10 以下 USDC（exact 通道）。可设更高价格。",
+    "填 0 为免费下载。付费：建议 $0.05–$10 以下（exact 通道）；最低 $0.01。",
   fieldPriceBelowSuggested: "低于 $0.05：$0.01 最低费超过售价 20%。",
   fieldPriceAboveSuggested:
     "允许 $10 以上 — 仍为 exact 通道，无 escrow。买家可能更少。",

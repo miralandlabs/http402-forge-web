@@ -50,7 +50,10 @@ export function ListingCard({ listing, hideSellerWallet = false }: ListingCardPr
         )}
         <p className="forge-card-desc">{listing.description.slice(0, 120)}</p>
         <p className="price">
-          {msg("priceLabel")}: {formatUsdc(listing.priceMicroUsdc)} USDC
+          {msg("priceLabel")}:{" "}
+          {listing.priceMicroUsdc === 0
+            ? msg("freePrice")
+            : `${formatUsdc(listing.priceMicroUsdc)} USDC`}
         </p>
         <Link to={`/forge/${listing.id}`}>
           <button type="button" className="control-btn primary">
